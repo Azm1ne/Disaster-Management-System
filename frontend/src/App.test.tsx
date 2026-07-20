@@ -1,0 +1,54 @@
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, expect, test } from 'vitest'
+import App from './App'
+import { AuthProvider } from '@/auth/AuthContext'
+import i18n from './i18n'
+
+function renderAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </MemoryRouter>,
+  )
+}
+
+function seedSession(role: string, nameEn: string) {
+  localStorage.setItem('dms.access', 'test-access')
+  localStorage.setItem('dms.refresh', 'test-refresh')
+  localStorage.setItem(
+    'dms.user',
+    JSON.stringify({ username: role.toLowerCase(), role, nameEn, nameBn: 'বাংলা নাম' }),
+  )
+}
+
+beforeEach(async () => {
+  localStorage.clear()
+  await i18n.changeLanguage('en')
+})
+
+test('a signed-out visitor to a protected route is sent to login', async () => {
+  renderAt('/coordinator')
+  expect(
+    await screen.findByRole('heading', { name: 'Sign in to the operation' }),
+  ).toBeInTheDocument()
+})
+
+test('a signed-in user lands on their own role workspace', () => {
+  seedSession('COORDINATOR', 'Rehana Karim')
+  renderAt('/coordinator')
+  // The role label appears in the shell (topbar + landing eyebrow).
+  expect(screen.getAllByText('Relief Coordinator').length).toBeGreaterThan(0)
+  expect(screen.getByText('Your workspace is coming online')).toBeInTheDocument()
+})
+
+test('a user is kept out of another role’s route', () => {
+  // A coordinator navigating to the donor route is redirected home to the operator shell,
+  // not shown the donor (field) workspace.
+  seedSession('COORDINATOR', 'Rehana Karim')
+  renderAt('/donor')
+  // The operator status ribbon (DEMO badge) proves we landed on the coordinator shell.
+  expect(screen.getByText('DEMO')).toBeInTheDocument()
+})
