@@ -23,3 +23,13 @@ management:
       show-details: never
       probes:
         enabled: true
+
+dms:
+  jwt:
+    # HS256 signing secret — MUST be overridden in any real deployment and be >= 32 bytes.
+    secret: ${DMS_JWT_SECRET:dev-secret-change-me-please-at-least-32-bytes-long}
+    access-ttl: ${DMS_JWT_ACCESS_TTL:PT15M}
+    refresh-ttl: ${DMS_JWT_REFRESH_TTL:P7D}
+  demo:
+    # Shared password for the seeded demo users (see README). Demo-only, never for production.
+    password: ${DMS_DEMO_PASSWORD:relief2026}

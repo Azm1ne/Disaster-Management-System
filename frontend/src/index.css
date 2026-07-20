@@ -3,7 +3,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* shadcn/ui design tokens (neutral base). Real role themes land with the role screens. */
+/* ------------------------------------------------------------------ *
+ * shadcn/ui neutral tokens — kept for the shadcn Button primitive.
+ * ------------------------------------------------------------------ */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -31,10 +33,59 @@
   --ring: oklch(0.556 0 0);
 }
 
+/* ------------------------------------------------------------------ *
+ * DMS design system.
+ *
+ * Two shells share one semantic token contract. `operator` is the
+ * dense situation-room (Coordinator / Admin / Camp Manager): a
+ * floodwater-night slate with a high-visibility amber signal. `field`
+ * is the calm, large-type surface for people in the field and the
+ * public (Victim / Volunteer / Donor / NGO): cool paper with a deep
+ * river blue. The theme is chosen by `data-theme` on the shell root,
+ * so both can coexist in one SPA.
+ *
+ * `operator` is also the default on :root so the app's front door
+ * (login) and any bare background render dark, never a white flash.
+ * ------------------------------------------------------------------ */
+:root,
+[data-theme='operator'] {
+  color-scheme: dark;
+  --bg: oklch(0.19 0.024 220);
+  --surface: oklch(0.226 0.026 220);
+  --surface-2: oklch(0.271 0.028 220);
+  --line: oklch(0.98 0.01 220 / 0.1);
+  --line-strong: oklch(0.98 0.01 220 / 0.18);
+  --ink: oklch(0.96 0.008 220);
+  --ink-muted: oklch(0.71 0.018 220);
+  --signal: oklch(0.82 0.15 78);
+  --signal-ink: oklch(0.24 0.035 70);
+  --ok: oklch(0.75 0.15 155);
+  --warn: oklch(0.81 0.14 76);
+  --crit: oklch(0.65 0.2 25);
+}
+
+[data-theme='field'] {
+  color-scheme: light;
+  --bg: oklch(0.975 0.008 235);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.962 0.011 235);
+  --line: oklch(0.9 0.014 235);
+  --line-strong: oklch(0.85 0.02 235);
+  --ink: oklch(0.26 0.021 245);
+  --ink-muted: oklch(0.5 0.021 245);
+  --signal: oklch(0.52 0.13 248);
+  --signal-ink: oklch(0.99 0 0);
+  --ok: oklch(0.55 0.13 150);
+  --warn: oklch(0.62 0.14 65);
+  --crit: oklch(0.55 0.2 25);
+}
+
 @theme inline {
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* shadcn primitives */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -45,17 +96,50 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
+
+  /* DMS semantic tokens -> Tailwind utilities (bg-bg, text-ink, border-line, …) */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-crit: var(--crit);
+
+  --font-sans: 'Noto Sans', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-mono: 'Noto Sans Mono', 'Noto Sans Bengali', ui-monospace, monospace;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--line);
   }
   body {
     margin: 0;
     min-height: 100svh;
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: 'Noto Sans', 'Noto Sans Bengali', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Bengali text needs a touch more line height to breathe. */
+  :lang(bn) {
+    line-height: 1.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

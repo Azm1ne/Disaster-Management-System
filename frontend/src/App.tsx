@@ -1,80 +1,40 @@
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthContext'
+import { ProtectedRoute } from '@/auth/ProtectedRoute'
+import Login from '@/routes/Login'
+import { OperatorShell } from '@/shells/OperatorShell'
+import { FieldShell } from '@/shells/FieldShell'
+import { ROLES, homePathForRole, type RoleConfig } from '@/roles'
 
-type HealthState = 'checking' | 'up' | 'down'
-
-function useApiHealth(): HealthState {
-  const [state, setState] = useState<HealthState>('checking')
-
-  useEffect(() => {
-    let active = true
-    fetch('/api/actuator/health')
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((body: { status?: string }) => {
-        if (active) setState(body.status === 'UP' ? 'up' : 'down')
-      })
-      .catch(() => {
-        if (active) setState('down')
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  return state
-}
-
-function App() {
-  const { t, i18n } = useTranslation()
-  const health = useApiHealth()
-
-  const toggleLanguage = () => {
-    void i18n.changeLanguage(i18n.language === 'en' ? 'bn' : 'en')
-  }
-
-  const healthLabel =
-    health === 'checking'
-      ? t('checking')
-      : health === 'up'
-        ? t('apiHealthy')
-        : t('apiUnreachable')
-
-  return (
-    <main className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center gap-8 px-6 py-16">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t('appName')}
-          </h1>
-          <p className="text-[var(--color-muted-foreground)]">{t('tagline')}</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={toggleLanguage}>
-          {t('language')}
-        </Button>
-      </div>
-
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5">
-        <p className="text-sm text-[var(--color-muted-foreground)]">
-          {t('systemStatus')}
-        </p>
-        <div className="mt-2 flex items-center gap-2">
-          <span
-            aria-hidden
-            className={
-              'h-2.5 w-2.5 rounded-full ' +
-              (health === 'up'
-                ? 'bg-emerald-500'
-                : health === 'down'
-                  ? 'bg-red-500'
-                  : 'bg-amber-500')
-            }
-          />
-          <span className="font-medium">{healthLabel}</span>
-        </div>
-      </div>
-    </main>
+function Workspace({ config }: { config: RoleConfig }) {
+  return config.shell === 'operator' ? (
+    <OperatorShell config={config} />
+  ) : (
+    <FieldShell config={config} />
   )
 }
 
-export default App
+function RootRedirect() {
+  const { user } = useAuth()
+  return <Navigate to={user ? homePathForRole(user.role) : '/login'} replace />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      {ROLES.map((config) => (
+        <Route
+          key={config.apiRole}
+          path={config.path}
+          element={
+            <ProtectedRoute apiRole={config.apiRole}>
+              <Workspace config={config} />
+            </ProtectedRoute>
+          }
+        />
+      ))}
+      <Route path="*" element={<RootRedirect />} />
+    </Routes>
+  )
+}
