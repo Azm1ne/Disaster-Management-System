@@ -1,0 +1,94 @@
+package bd.dms.sim;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import bd.dms.world.Camp;
+import bd.dms.world.CampRepository;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+/**
+ * The engine seam: proves that driving the engine actually writes the scripted world into the
+ * real camp rows, that engine output matches the pure {@link Scenario} tick-for-tick, that a
+ * changed speed leaves the state sequence untouched, and that reset returns to baseline. Runs on
+ * the H2 test database with the full V1–V6 seed applied.
+ */
+@SpringBootTest
+class SimulationEngineTest {
+
+    @Autowired
+    private SimulationEngine engine;
+
+    @Autowired
+    private CampRepository camps;
+
+    private Map<String, Camp> campsByCode() {
+        return camps.findAll().stream().collect(Collectors.toMap(Camp::getCode, Function.identity()));
+    }
+
+    @Test
+    void resetReturnsWorldToBaseline() {
+        engine.advance();
+        engine.advance();
+        engine.reset();
+
+        Map<String, Camp> world = campsByCode();
+        assertThat(world.get("jam-kurigram-sadar").getPopulation()).isEqualTo(1080);
+        assertThat(world.get("jam-kurigram-sadar").getStatus()).isEqualTo("OPEN");
+        assertThat(world.get("jam-char-relief").getPopulation()).isZero();
+        assertThat(world.get("jam-char-relief").getStatus()).isEqualTo("CLOSED");
+        assertThat(engine.currentTick()).isZero();
+        assertThat(engine.isRunning()).isFalse();
+    }
+
+    @Test
+    void advanceWritesScenarioStateToTheDatabase() {
+        engine.reset();
+        for (int i = 0; i < 20; i++) {
+            engine.advance();
+        }
+
+        Camp charRelief = campsByCode().get("jam-char-relief");
+        // The overflow camp opens at tick 20 — proof the scripted mid-run event reached the DB.
+        assertThat(charRelief.getStatus()).isEqualTo("OPEN");
+        assertThat(campsByCode().get("jam-kurigram-sadar").getPopulation())
+                .isEqualTo(Scenario.stateAt(20).camp("jam-kurigram-sadar").population());
+    }
+
+    @Test
+    void engineSequenceMatchesThePureFunctionTickForTick() {
+        engine.reset();
+        for (long tick = 1; tick <= 5; tick++) {
+            engine.advance();
+            int expected = Scenario.stateAt(tick).camp("jam-nageshwari").population();
+            assertThat(campsByCode().get("jam-nageshwari").getPopulation())
+                    .as("tick %d", tick)
+                    .isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void speedChangesCadenceNotTheStateSequence() {
+        engine.reset();
+        engine.setSpeed(4.0);
+        for (int i = 0; i < 3; i++) {
+            engine.advance();
+        }
+        // Speed never enters the state function; tick 3 looks identical at any speed.
+        assertThat(campsByCode().get("jam-nageshwari").getPopulation())
+                .isEqualTo(Scenario.stateAt(3).camp("jam-nageshwari").population());
+        assertThat(engine.clock().speed()).isEqualTo(4.0);
+    }
+
+    @Test
+    void pauseAndResumeAreReflectedInTheClock() {
+        engine.resume();
+        assertThat(engine.clock().running()).isTrue();
+        engine.pause();
+        assertThat(engine.clock().running()).isFalse();
+    }
+}

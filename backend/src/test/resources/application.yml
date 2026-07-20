@@ -9,3 +9,9 @@ spring:
       ddl-auto: none
   flyway:
     enabled: true
+
+# Tests drive the simulation explicitly; the wall-clock scheduler stays off so no background
+# tick can race an assertion. Scheduler behaviour is unit-tested directly (SimulationSchedulerTest).
+dms:
+  simulation:
+    auto-tick: false
