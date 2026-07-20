@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { ProtectedRoute } from '@/auth/ProtectedRoute'
 import Login from '@/routes/Login'
+import Locator from '@/routes/Locator'
 import { OperatorShell } from '@/shells/OperatorShell'
 import { FieldShell } from '@/shells/FieldShell'
 import { ROLES, homePathForRole, type RoleConfig } from '@/roles'
@@ -23,6 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/locator" element={<Locator />} />
       {ROLES.map((config) => (
         <Route
           key={config.apiRole}

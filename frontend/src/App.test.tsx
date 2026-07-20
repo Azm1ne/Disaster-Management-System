@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, expect, test } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
 import { AuthProvider } from '@/auth/AuthContext'
 import i18n from './i18n'
+
+// The map workspace pulls in Leaflet and the world API; neither belongs in a routing test, so
+// stand it in for a marker these tests can assert on.
+vi.mock('@/world/WorldWorkspace', () => ({
+  WorldWorkspace: () => <div>world-workspace</div>,
+}))
 
 function renderAt(path: string) {
   return render(
@@ -39,9 +45,9 @@ test('a signed-out visitor to a protected route is sent to login', async () => {
 test('a signed-in user lands on their own role workspace', () => {
   seedSession('COORDINATOR', 'Rehana Karim')
   renderAt('/coordinator')
-  // The role label appears in the shell (topbar + landing eyebrow).
+  // The role label appears in the shell topbar, and the map workspace is mounted.
   expect(screen.getAllByText('Relief Coordinator').length).toBeGreaterThan(0)
-  expect(screen.getByText('Your workspace is coming online')).toBeInTheDocument()
+  expect(screen.getByText('world-workspace')).toBeInTheDocument()
 })
 
 test('a user is kept out of another role’s route', () => {
