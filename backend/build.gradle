@@ -36,8 +36,18 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'com.h2database:h2'
+
+    // Testcontainers: the world-read seam (Seam 1) runs against a real Postgres so geometry
+    // and JSONB behave as they do at runtime. Versions come from the Spring Boot BOM.
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    // The docker-java client shaded into Testcontainers otherwise defaults to Docker API 1.32,
+    // which Docker Engine 29+ rejects (minimum 1.40). Pin to the floor so the Testcontainers
+    // seam runs on any modern daemon (1.40 is supported by every Docker since 19.03).
+    systemProperty 'api.version', '1.40'
 }
