@@ -1,0 +1,4 @@
+# Claude/planning metadata — keep OFF the public repo
+.scratch/
+docs/specs/
+.claude/

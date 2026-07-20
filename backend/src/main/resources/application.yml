@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: dms-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dms}
+    username: ${SPRING_DATASOURCE_USERNAME:dms}
+    password: ${SPRING_DATASOURCE_PASSWORD:dms}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
