@@ -1,6 +1,7 @@
 package bd.dms.sim;
 
 import java.util.function.LongSupplier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,9 @@ public class SimulationScheduler {
     private long lastTickAt;
     private boolean ticked = false;
 
+    // Explicitly marked: the package-private constructor below exists for tests, so without this
+    // Spring cannot tell which of the two to use and falls back to a no-arg one that does not exist.
+    @Autowired
     public SimulationScheduler(
             SimulationEngine engine, @Value("${dms.simulation.base-tick-ms:1000}") long baseTickMillis) {
         this(engine, baseTickMillis, System::currentTimeMillis);
