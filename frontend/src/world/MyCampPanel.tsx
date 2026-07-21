@@ -47,10 +47,10 @@ export function MyCampPanel() {
       <ul className="flex flex-wrap gap-2">
         {camp.resources.map((resource) => (
           <li
-            key={resource.resourceType}
+            key={resource.type}
             className="rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-muted"
           >
-            <span className="text-ink-muted">{t(`camp.resource.${resource.resourceType}`)}</span>{' '}
+            <span className="text-ink-muted">{t(`camp.resource.${resource.type}`)}</span>{' '}
             <span className="tabular-nums text-ink">
               {Math.round(resource.quantity).toLocaleString(i18n.language)}
             </span>

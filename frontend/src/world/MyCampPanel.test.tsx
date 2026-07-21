@@ -15,7 +15,13 @@ const camp: CampDetail = {
   population: 1330,
   status: 'OPEN',
   disaster: { id: 1, nameEn: 'Jamuna River Flood', nameBn: 'যমুনা নদীর বন্যা' },
-  resources: [{ resourceType: 'WATER', quantity: 2394.5, unit: 'liters/day' }],
+  // Field names mirror the API exactly (`type`, not `resourceType`) — a fixture that drifts from
+  // the real payload hides bugs rather than catching them.
+  resources: [
+    { type: 'FOOD', quantity: 2160, unit: 'meal packs' },
+    { type: 'WATER', quantity: 2394.5, unit: 'liters/day' },
+    { type: 'MEDICAL', quantity: 1080, unit: 'aid kits' },
+  ],
 }
 
 const myCamp = vi.fn<() => CampDetail | undefined>(() => camp)
@@ -32,8 +38,11 @@ test('a manager sees their own camp with its live occupancy and stock', () => {
 
   expect(screen.getByText('Kurigram Sadar Govt College Shelter')).toBeInTheDocument()
   expect(screen.getByText('1,330 / 1,200')).toBeInTheDocument()
-  expect(screen.getByText('Water')).toBeInTheDocument()
   expect(screen.getByText('2,395')).toBeInTheDocument()
+  // Every resource type is labelled from its code, so a shape mismatch with the API shows up here.
+  expect(screen.getByText('Water')).toBeInTheDocument()
+  expect(screen.getByText('Food')).toBeInTheDocument()
+  expect(screen.getByText('Medical')).toBeInTheDocument()
 })
 
 test('a camp past its capacity says so, because that is what needs acting on', () => {

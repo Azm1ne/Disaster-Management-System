@@ -42,7 +42,7 @@ export interface Disaster {
 
 /** One line of a camp's resource summary. The type is a code the UI translates. */
 export interface ResourceView {
-  resourceType: 'WATER' | 'FOOD' | 'MEDICAL' | 'SHELTER'
+  type: 'WATER' | 'FOOD' | 'MEDICAL' | 'SHELTER'
   quantity: number
   unit: string
 }
