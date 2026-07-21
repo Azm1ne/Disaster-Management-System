@@ -5,6 +5,7 @@ import bd.dms.user.Role;
 import bd.dms.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
  * migrations and lets the demo password be overridden per-environment.
  */
 @Component
+@Order(1)
 public class DemoUserSeeder implements CommandLineRunner {
 
     private final UserRepository users;
