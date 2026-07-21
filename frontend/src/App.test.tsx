@@ -11,6 +11,20 @@ vi.mock('@/world/WorldWorkspace', () => ({
   WorldWorkspace: () => <div>world-workspace</div>,
 }))
 
+// Routing tests should not open a real socket or poll the clock; the realtime seam has its own
+// tests. Stand both in so the shell renders exactly as it would with the feed quiet.
+vi.mock('@/realtime/RealtimeProvider', () => ({
+  RealtimeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useRealtime: () => ({ connected: false, subscribe: () => () => {} }),
+  useTopic: () => {},
+  refetchIntervalFor: () => false,
+}))
+
+vi.mock('@/sim/useSimulationClock', () => ({
+  CLOCK_QUERY_KEY: ['simulation', 'clock'],
+  useSimulationClock: () => undefined,
+}))
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -55,6 +69,7 @@ test('a user is kept out of another role’s route', () => {
   // not shown the donor (field) workspace.
   seedSession('COORDINATOR', 'Rehana Karim')
   renderAt('/donor')
-  // The operator status ribbon (DEMO badge) proves we landed on the coordinator shell.
-  expect(screen.getByText('DEMO')).toBeInTheDocument()
+  // The operator status ribbon (DEMO badge) proves we landed on the coordinator shell. The badge
+  // also rides the simulation-control toggle, so more than one is expected here.
+  expect(screen.getAllByText('DEMO').length).toBeGreaterThan(0)
 })
