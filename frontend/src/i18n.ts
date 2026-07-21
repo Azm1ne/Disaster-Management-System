@@ -92,6 +92,13 @@ const resources = {
         disasterStatus: { active: 'Active', stable: 'Stable' },
       },
 
+      camp: {
+        mine: 'Your camp',
+        occupancy: 'sheltered',
+        overCapacity: 'over capacity',
+        resource: { WATER: 'Water', FOOD: 'Food', MEDICAL: 'Medical', SHELTER: 'Shelter' },
+      },
+
       sim: {
         title: 'Simulation control',
         subtitle: 'Drives the scripted Jamuna scenario. Demo only.',
@@ -208,6 +215,13 @@ const resources = {
         shelteredCount: '{{n}} জন আশ্রিত',
         status: { open: 'খোলা', closed: 'বন্ধ' },
         disasterStatus: { active: 'সক্রিয়', stable: 'স্থিতিশীল' },
+      },
+
+      camp: {
+        mine: 'আপনার ক্যাম্প',
+        occupancy: 'আশ্রিত',
+        overCapacity: 'ধারণক্ষমতার বেশি',
+        resource: { WATER: 'পানি', FOOD: 'খাবার', MEDICAL: 'চিকিৎসা', SHELTER: 'আশ্রয়' },
       },
 
       sim: {

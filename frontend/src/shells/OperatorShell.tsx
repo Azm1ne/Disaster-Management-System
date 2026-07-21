@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { StatusRibbon } from '@/shells/StatusRibbon'
 import { DemoBadge, SimulationControlPanel } from '@/sim/SimulationControlPanel'
+import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import type { RoleConfig } from '@/roles'
 
@@ -82,8 +83,11 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
           </header>
 
           <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-            <main className="min-h-0 flex-1">
-              <WorldWorkspace />
+            <main className="flex min-h-0 flex-1 flex-col">
+              {config.apiRole === 'CAMP_MANAGER' && <MyCampPanel />}
+              <div className="min-h-0 flex-1">
+                <WorldWorkspace />
+              </div>
             </main>
             {simOpen && <SimulationControlPanel onClose={() => setSimOpen(false)} />}
           </div>
