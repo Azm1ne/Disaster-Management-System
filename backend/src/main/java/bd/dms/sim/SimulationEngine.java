@@ -53,7 +53,7 @@ public class SimulationEngine {
         }
         tick++;
         apply(Scenario.stateAt(tick));
-        return publish();
+        return publish(true);
     }
 
     /** Return to the scripted baseline (tick 0) and pause, so a demo restarts from a clean state. */
@@ -62,17 +62,17 @@ public class SimulationEngine {
         tick = 0;
         running = false;
         apply(Scenario.stateAt(0));
-        return publish();
+        return publish(true);
     }
 
     public synchronized SimulationClock pause() {
         running = false;
-        return publish();
+        return publish(false);
     }
 
     public synchronized SimulationClock resume() {
         running = true;
-        return publish();
+        return publish(false);
     }
 
     /** Set the playback speed (cadence only — the state sequence is unchanged). */
@@ -81,7 +81,7 @@ public class SimulationEngine {
             throw new IllegalArgumentException("Unsupported speed: " + newSpeed);
         }
         speed = newSpeed;
-        return publish();
+        return publish(false);
     }
 
     public synchronized SimulationClock clock() {
@@ -125,9 +125,9 @@ public class SimulationEngine {
         }
     }
 
-    private SimulationClock publish() {
+    private SimulationClock publish(boolean worldChanged) {
         SimulationClock clock = clock();
-        events.publishEvent(new WorldChangedEvent(clock));
+        events.publishEvent(new WorldChangedEvent(clock, worldChanged));
         return clock;
     }
 }
