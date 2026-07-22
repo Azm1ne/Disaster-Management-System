@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/simulation/clock").authenticated()
                         .requestMatchers(HttpMethod.POST, "/simulation/**")
                                 .hasAnyRole("ADMIN", "COORDINATOR")
+                        .requestMatchers("/alerts/**")
+                                .hasAnyRole("ADMIN", "COORDINATOR", "CAMP_MANAGER")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         // Unauthenticated -> 401; authenticated-but-forbidden -> 403.
