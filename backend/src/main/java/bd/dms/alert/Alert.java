@@ -120,4 +120,9 @@ public class Alert {
         this.status = status;
         this.updatedAt = Instant.now();
     }
+
+    // Mutator exists solely for AlertService, the sole writer of alert state.
+    void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
