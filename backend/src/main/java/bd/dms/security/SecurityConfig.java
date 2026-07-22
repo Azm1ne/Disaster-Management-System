@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout").permitAll()
+                        .requestMatchers("/public/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         // /error is the container's internal dispatch target; it must stay open or a
                         // 403 from the access-denied handler would be re-dispatched and overwritten with 401.

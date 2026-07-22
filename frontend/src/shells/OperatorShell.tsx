@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { StatusRibbon } from '@/shells/StatusRibbon'
+import { WorldWorkspace } from '@/world/WorldWorkspace'
 import type { RoleConfig } from '@/roles'
 
 const NAV_PLACEHOLDER = ['camps', 'alerts', 'resources', 'people'] as const
@@ -67,25 +68,8 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
             </div>
           </header>
 
-          <main className="flex-1 p-4 sm:p-8">
-            <div className="mx-auto max-w-4xl">
-              <p className="font-mono text-xs tracking-wide text-signal uppercase">{roleLabel}</p>
-              <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                {t('shell.placeholderTitle')}
-              </h1>
-              <p className="mt-3 max-w-2xl text-ink-muted">
-                {t('shell.placeholderBody', { role: roleLabel })}
-              </p>
-
-              <div className="mt-8 grid grid-cols-3 gap-3 sm:max-w-lg">
-                {(['camps', 'people', 'alerts'] as const).map((metric) => (
-                  <div key={metric} className="rounded-lg border border-line bg-surface p-4">
-                    <p className="font-mono text-2xl text-ink-muted">—</p>
-                    <p className="mt-1 text-xs text-ink-muted">{t(`nav.${metric}`)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <main className="min-h-0 flex-1">
+            <WorldWorkspace />
           </main>
         </div>
       </div>
