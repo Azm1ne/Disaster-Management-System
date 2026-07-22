@@ -116,6 +116,7 @@ class AlertLifecycleIntegrationTest {
     void handlerAndCoordinatorCanBothAddNotesButUnrelatedRoleCannot() {
         AppUser coordinator = users.findByUsername("coordinator").orElseThrow();
         AppUser campManager = users.findByUsername("camp_manager").orElseThrow();
+        AppUser donorUser = users.findByUsername("donor").orElseThrow();
         Long campId = camps.findByCode("jam-kurigram-sadar").orElseThrow().getId();
         Alert alert = alerts.raise(campManager, AlertType.RESOURCE_SHORTAGE, campId, "Low water");
 
@@ -125,6 +126,9 @@ class AlertLifecycleIntegrationTest {
         assertThat(alerts.notesFor(alert.getId()))
                 .extracting(Note::getBody)
                 .containsExactly(fromManager.getBody(), fromCoordinator.getBody());
+
+        assertThatThrownBy(() -> alerts.addNote(donorUser, alert.getId(), "should not be allowed"))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

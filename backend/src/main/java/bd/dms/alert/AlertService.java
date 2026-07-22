@@ -154,15 +154,14 @@ public class AlertService {
     }
 
     public boolean canAct(AppUser actor, Alert alert) {
-        if (isOversight(actor)) {
-            return true;
-        }
-        return actor.getRole() == Role.CAMP_MANAGER
-                && alert.getType().routesToCampManager()
-                && managesCamp(actor, alert.getCampId());
+        return hasCampScopedAccess(actor, alert);
     }
 
     private boolean isVisible(AppUser actor, Alert alert) {
+        return hasCampScopedAccess(actor, alert);
+    }
+
+    private boolean hasCampScopedAccess(AppUser actor, Alert alert) {
         if (isOversight(actor)) {
             return true;
         }
