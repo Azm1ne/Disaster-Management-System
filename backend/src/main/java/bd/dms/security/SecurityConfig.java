@@ -47,6 +47,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/simulation/clock").authenticated()
                         .requestMatchers(HttpMethod.POST, "/simulation/**")
                                 .hasAnyRole("ADMIN", "COORDINATOR")
+                        // A victim's own group: register it, read it, tap "arrived" on it.
+                        .requestMatchers("/family/**").hasRole("VICTIM")
+                        // The camp-scoped staff side of arrival — per-camp entitlement is
+                        // enforced in FamilyService, mirroring the realtime camp-topic boundary.
+                        .requestMatchers("/camp/*/arrivals/**").hasAnyRole("ADMIN", "COORDINATOR", "CAMP_MANAGER")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         // Unauthenticated -> 401; authenticated-but-forbidden -> 403.
