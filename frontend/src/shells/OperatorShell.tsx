@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { StatusRibbon } from '@/shells/StatusRibbon'
+import { DemoBadge, SimulationControlPanel } from '@/sim/SimulationControlPanel'
+import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import type { RoleConfig } from '@/roles'
 
@@ -15,6 +18,7 @@ const NAV_PLACEHOLDER = ['camps', 'alerts', 'resources', 'people'] as const
 export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
+  const [simOpen, setSimOpen] = useState(false)
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
 
@@ -57,6 +61,16 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
               <p className="truncate text-sm font-medium">{personName}</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
+              {!simOpen && (
+                <button
+                  type="button"
+                  onClick={() => setSimOpen(true)}
+                  className="inline-flex h-9 items-center gap-2 rounded-full border border-line px-3.5 text-xs text-ink-muted transition-colors hover:border-line-strong hover:text-ink"
+                >
+                  {t('sim.title')}
+                  <DemoBadge />
+                </button>
+              )}
               <LanguageToggle />
               <button
                 type="button"
@@ -68,9 +82,15 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
             </div>
           </header>
 
-          <main className="min-h-0 flex-1">
-            <WorldWorkspace />
-          </main>
+          <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+            <main className="flex min-h-0 flex-1 flex-col">
+              {config.apiRole === 'CAMP_MANAGER' && <MyCampPanel />}
+              <div className="min-h-0 flex-1">
+                <WorldWorkspace />
+              </div>
+            </main>
+            {simOpen && <SimulationControlPanel onClose={() => setSimOpen(false)} />}
+          </div>
         </div>
       </div>
     </div>

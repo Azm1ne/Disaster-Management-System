@@ -25,4 +25,10 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErrorResponse> onValidation(MethodArgumentNotValidException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse("invalid_request"));
     }
+
+    /** An out-of-range argument (e.g. an unsupported simulation speed) is a bad request, not a 500. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> onIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse("invalid_request"));
+    }
 }

@@ -30,6 +30,11 @@ interface AuthContextValue {
 const STORAGE = { access: 'dms.access', refresh: 'dms.refresh', user: 'dms.user' }
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
+/** The current access token, for callers outside fetch() — notably the STOMP CONNECT frame. */
+export function getAccessToken(): string | null {
+  return localStorage.getItem(STORAGE.access)
+}
+
 function readStoredUser(): AuthUser | null {
   try {
     const raw = localStorage.getItem(STORAGE.user)

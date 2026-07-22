@@ -2,6 +2,7 @@ package bd.dms.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -32,11 +33,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        // The WebSocket handshake carries no bearer header; the realtime session is
+                        // authenticated at STOMP CONNECT and authorized per topic subscription
+                        // (see StompAuthChannelInterceptor).
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         // /error is the container's internal dispatch target; it must stay open or a
                         // 403 from the access-denied handler would be re-dispatched and overwritten with 401.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Reading the DEMO clock is open to any signed-in user so every screen
+                        // shows the same simulation time; driving the simulation is not.
+                        .requestMatchers(HttpMethod.GET, "/simulation/clock").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/simulation/**")
+                                .hasAnyRole("ADMIN", "COORDINATOR")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         // Unauthenticated -> 401; authenticated-but-forbidden -> 403.

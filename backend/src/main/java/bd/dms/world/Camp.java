@@ -91,4 +91,15 @@ public class Camp {
     public String getStatus() {
         return status;
     }
+
+    // Mutators exist solely for the simulation engine, which is the sole writer of simulated
+    // world change (see SimulationEngine). No request path mutates a camp in this slice.
+
+    public void setPopulation(int population) {
+        this.population = population;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

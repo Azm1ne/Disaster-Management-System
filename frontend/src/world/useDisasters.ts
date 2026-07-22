@@ -1,26 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/auth/AuthContext'
+import { refetchIntervalFor, useRealtime, useTopic } from '@/realtime/RealtimeProvider'
 import { fetchDisasters, type Disaster } from '@/world/api'
+
+export const DISASTERS_QUERY_KEY = ['world', 'disasters'] as const
 
 type State =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ready'; disasters: Disaster[] }
 
-/** Loads the authenticated world once. Later slices swap this for a live (STOMP) subscription. */
+/**
+ * The live world. The simulation pushes each tick over STOMP straight into the query cache, so
+ * the map redraws without refetching; if the socket drops, the same query falls back to polling
+ * until it returns. Callers see one shape either way and never learn which path delivered it.
+ */
 export function useDisasters(): State {
   const { authFetch } = useAuth()
-  const [state, setState] = useState<State>({ status: 'loading' })
+  const { connected } = useRealtime()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    let active = true
-    fetchDisasters(authFetch)
-      .then((disasters) => active && setState({ status: 'ready', disasters }))
-      .catch(() => active && setState({ status: 'error' }))
-    return () => {
-      active = false
-    }
-  }, [authFetch])
+  const query = useQuery({
+    queryKey: DISASTERS_QUERY_KEY,
+    queryFn: () => fetchDisasters(authFetch),
+    refetchInterval: refetchIntervalFor(connected),
+  })
 
-  return state
+  useTopic('/topic/world', (body) => {
+    queryClient.setQueryData(DISASTERS_QUERY_KEY, body as Disaster[])
+  })
+
+  if (query.isPending) return { status: 'loading' }
+  if (query.isError || !query.data) return { status: 'error' }
+  return { status: 'ready', disasters: query.data }
 }

@@ -20,6 +20,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // The STOMP endpoint. Same treatment as /api, but upgraded to a WebSocket.
+      '/ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
   test: {
@@ -27,5 +33,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Unit tests only. The end-to-end specs in e2e/ are driven by Playwright, which needs a
+    // real browser and a running stack.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 })

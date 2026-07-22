@@ -55,4 +55,9 @@ public class CampResource {
     public String getUnit() {
         return unit;
     }
+
+    /** Engine-only: the simulation is the sole writer of a camp's resource quantities. */
+    public void setQuantity(BigDecimal quantity) {
+        this.quantity = quantity;
+    }
 }
