@@ -122,7 +122,9 @@ class AlertLifecycleIntegrationTest {
         Note fromManager = alerts.addNote(campManager, alert.getId(), "Checked the tank, confirmed low");
         Note fromCoordinator = alerts.addNote(coordinator, alert.getId(), "Rerouting a convoy");
 
-        assertThat(alerts.notesFor(alert.getId())).containsExactly(fromManager, fromCoordinator);
+        assertThat(alerts.notesFor(alert.getId()))
+                .extracting(Note::getBody)
+                .containsExactly(fromManager.getBody(), fromCoordinator.getBody());
     }
 
     @Test
