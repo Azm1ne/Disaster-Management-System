@@ -16,14 +16,17 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * The SLA sweep is a leaf {@code @Scheduled} component like {@code SimulationScheduler}, so it
  * runs on the real Spring scheduler here rather than being driven by hand — the thing under test
  * is that the sweep actually fires and finds stale alerts, not the timing math (that lives in
- * {@code AlertSla} and is unit-tested there).
+ * {@code AlertSla} and is unit-tested there). It opts back into {@code dms.simulation.auto-tick=true}
+ * since the rest of the suite disables it (see {@code AlertSlaScheduler}'s Javadoc).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = "dms.simulation.auto-tick=true")
 class AlertSlaSchedulerIntegrationTest {
 
     @Autowired
