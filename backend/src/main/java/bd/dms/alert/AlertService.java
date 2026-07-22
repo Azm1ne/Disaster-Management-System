@@ -145,6 +145,11 @@ public class AlertService {
         return alerts.findById(alertId).filter(alert -> isVisible(actor, alert));
     }
 
+    /** No actor filtering — realtime push already gated who is subscribed to what topic. */
+    public Optional<Alert> raw(Long alertId) {
+        return alerts.findById(alertId);
+    }
+
     public List<AlertTransition> transitionsFor(Long alertId) {
         return transitions.findByAlertIdOrderByAtTickAsc(alertId);
     }

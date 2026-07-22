@@ -38,6 +38,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private static final String BEARER = "Bearer ";
     private static final String CAMP_PREFIX = "/topic/camp/";
+    private static final String COORDINATOR_ALERTS_TOPIC = "/topic/alerts";
 
     private final JwtService jwtService;
     private final UserRepository users;
@@ -86,11 +87,27 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         if (destination.equals("/topic/simulation") || destination.equals("/topic/world")) {
             return; // the shared world picture — any authenticated user
         }
+        if (destination.equals(COORDINATOR_ALERTS_TOPIC)) {
+            requireOversightRole(authentication);
+            return;
+        }
+        if (destination.startsWith(CAMP_PREFIX) && destination.endsWith("/alerts")) {
+            String campIdSegment = destination.substring(
+                    CAMP_PREFIX.length(), destination.length() - "/alerts".length());
+            authorizeCampTopic(authentication, campIdSegment);
+            return;
+        }
         if (destination.startsWith(CAMP_PREFIX)) {
             authorizeCampTopic(authentication, destination.substring(CAMP_PREFIX.length()));
             return;
         }
         throw new AccessDeniedException("Unknown topic: " + destination);
+    }
+
+    private void requireOversightRole(Authentication authentication) {
+        if (!hasRole(authentication, "ROLE_COORDINATOR") && !hasRole(authentication, "ROLE_ADMIN")) {
+            throw new AccessDeniedException("Only Coordinator/Admin may subscribe to /topic/alerts");
+        }
     }
 
     private void authorizeCampTopic(Authentication authentication, String campIdSegment) {
