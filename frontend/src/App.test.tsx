@@ -11,6 +11,12 @@ vi.mock('@/world/WorldWorkspace', () => ({
   WorldWorkspace: () => <div>world-workspace</div>,
 }))
 
+// The alert workspace fetches through react-query, which this routing test renders without a
+// QueryClientProvider (that lives in main.tsx, above App). Stand it in like WorldWorkspace.
+vi.mock('@/alerts/AlertWorkspace', () => ({
+  AlertWorkspace: () => <div>alert-workspace</div>,
+}))
+
 // Routing tests should not open a real socket or poll the clock; the realtime seam has its own
 // tests. Stand both in so the shell renders exactly as it would with the feed quiet.
 vi.mock('@/realtime/RealtimeProvider', () => ({

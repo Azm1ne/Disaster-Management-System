@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AlertWorkspace } from '@/alerts/AlertWorkspace'
 import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { StatusRibbon } from '@/shells/StatusRibbon'
@@ -8,7 +9,7 @@ import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import type { RoleConfig } from '@/roles'
 
-const NAV_PLACEHOLDER = ['camps', 'alerts', 'resources', 'people'] as const
+const NAV_PLACEHOLDER = ['camps', 'resources', 'people'] as const
 
 /**
  * The dense situation-room shell for the people running the operation (Coordinator, Admin,
@@ -38,6 +39,7 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
             <span className="rounded-md bg-surface-2 px-3 py-2 text-sm font-medium text-ink">
               {t('nav.overview')}
             </span>
+            <span className="rounded-md px-3 py-2 text-sm text-ink">{t('nav.alerts')}</span>
             {NAV_PLACEHOLDER.map((item) => (
               <span
                 key={item}
@@ -85,8 +87,9 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
           <div className="flex min-h-0 flex-1 flex-col md:flex-row">
             <main className="flex min-h-0 flex-1 flex-col">
               {config.apiRole === 'CAMP_MANAGER' && <MyCampPanel />}
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 <WorldWorkspace />
+                <AlertWorkspace />
               </div>
             </main>
             {simOpen && <SimulationControlPanel onClose={() => setSimOpen(false)} />}
