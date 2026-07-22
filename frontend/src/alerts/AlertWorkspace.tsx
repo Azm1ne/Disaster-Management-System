@@ -56,7 +56,7 @@ export function AlertWorkspace() {
 
       {!alerts?.length && <p className="text-sm text-ink-muted">{t('alertLifecycle.empty')}</p>}
 
-      <ul className="flex flex-col gap-2">
+      <ul aria-label={t('alertLifecycle.title')} className="flex flex-col gap-2">
         {alerts?.map((alert) => (
           <AlertRow key={alert.id} alert={alert} onSelect={() => setSelectedId(alert.id)} />
         ))}
@@ -142,7 +142,12 @@ function RaiseAlertForm({ onDone }: { onDone: () => void }) {
       }}
       className="flex flex-col gap-2 rounded-lg border border-line p-3"
     >
-      <select value={type} onChange={(event) => setType(event.target.value as AlertType)} className="rounded border border-line p-2 text-sm">
+      <select
+        value={type}
+        onChange={(event) => setType(event.target.value as AlertType)}
+        aria-label={t('alertLifecycle.typeLabel')}
+        className="rounded border border-line p-2 text-sm"
+      >
         {ALERT_TYPES.map((option) => (
           <option key={option} value={option}>
             {t(`alertLifecycle.type.${option}`)}

@@ -144,6 +144,7 @@ const resources = {
         submit: 'Submit',
         cancel: 'Cancel',
         camp: 'Camp',
+        typeLabel: 'Alert type',
         type: {
           RESOURCE_SHORTAGE: 'Resource shortage',
           MEDICAL_EMERGENCY: 'Medical emergency',
@@ -306,6 +307,7 @@ const resources = {
         submit: 'জমা দিন',
         cancel: 'বাতিল',
         camp: 'ক্যাম্প',
+        typeLabel: 'সতর্কতার ধরন',
         type: {
           RESOURCE_SHORTAGE: 'সম্পদ ঘাটতি',
           MEDICAL_EMERGENCY: 'চিকিৎসা জরুরি অবস্থা',
