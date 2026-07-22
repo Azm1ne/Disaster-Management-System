@@ -11,14 +11,19 @@ import { signIn } from './helpers'
 test('a victim registers, confirms arrival, and can be found by reunification search', async ({ page }) => {
   await signIn(page, 'victim')
 
+  // Signing in only waits for the URL, and the panel renders nothing until it knows whether a
+  // group exists — so settle into one of its two states before branching. `isVisible()` never
+  // waits, and answering it mid-load silently skips the registration this test is here to do.
   const registerHeading = page.getByRole('heading', { name: 'Register your family' })
-  if (await registerHeading.isVisible().catch(() => false)) {
+  const registeredName = page.getByText('Rahman Household')
+  await expect(registerHeading.or(registeredName)).toBeVisible()
+  if (await registerHeading.isVisible()) {
     await page.getByLabel('Family or group name').fill('Rahman Household')
     await page.getByLabel('Destination camp').selectOption({ label: 'Kurigram Sadar Govt College Shelter' })
     await page.getByPlaceholder('Nickname').fill('Abbu')
     await page.getByRole('button', { name: 'Register' }).click()
   }
-  await expect(page.getByText('Rahman Household')).toBeVisible()
+  await expect(registeredName).toBeVisible()
 
   const arriveButton = page.getByRole('button', { name: "I've arrived at the camp" })
   if (await arriveButton.isVisible().catch(() => false)) {
@@ -29,11 +34,16 @@ test('a victim registers, confirms arrival, and can be found by reunification se
   await page.getByRole('button', { name: 'Sign out' }).click()
   await signIn(page, 'camp_manager')
 
-  const confirmButton = page.getByRole('button', { name: 'Confirm arrival' }).first()
-  if (await confirmButton.isVisible().catch(() => false)) {
+  // Same rule on the manager's side: the queue is empty until its own query resolves, so wait
+  // for the group's row before asking whether it still needs confirming.
+  await expect(page.getByText('Rahman Household')).toBeVisible()
+  const rahmanRow = page.getByRole('listitem').filter({ hasText: 'Rahman Household' })
+  const confirmButton = rahmanRow.getByRole('button', { name: 'Confirm arrival' })
+  if (await confirmButton.isVisible()) {
     await confirmButton.click()
   }
-  await expect(page.getByText('Rahman Household')).toBeVisible()
+  // The button renders only while the manager's stamp is missing, so its absence is the stamp.
+  await expect(confirmButton).toHaveCount(0)
 
   // Reunification: no login, search only, and never a roster.
   await page.getByRole('button', { name: 'Sign out' }).click()
