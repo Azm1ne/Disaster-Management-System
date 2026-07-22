@@ -26,6 +26,11 @@ public class AlertBroadcaster {
     @EventListener
     public void onAlertChanged(AlertChangedEvent event) {
         alertService.raw(event.alertId()).ifPresent(alert -> {
+            // Pushes the raw Alert entity, not the AlertSummary DTO: AlertSummary.canAct is
+            // actor-relative (computed per-viewer via AlertService.canAct) and can't be
+            // correctly represented in one payload fanned out to every topic subscriber.
+            // Consumers treat this push as a signal to refetch via the REST DTO endpoints for
+            // actor-scoped fields like canAct.
             messaging.convertAndSend("/topic/alerts", alert);
             if (alert.getType().routesToCampManager()) {
                 messaging.convertAndSend("/topic/camp/" + alert.getCampId() + "/alerts", alert);

@@ -5,7 +5,6 @@ import {
   addAlertNote,
   fetchAlertDetail,
   transitionAlert,
-  type AlertDetail,
   type AlertStatus,
 } from '@/alerts/api'
 
@@ -27,7 +26,7 @@ export function useAlertDetail(id: number | null) {
   useTopic(id === null || user?.role === 'CAMP_MANAGER' ? null : '/topic/alerts', invalidate)
 
   return {
-    detail: detail.data as AlertDetail | undefined,
+    detail: detail.data,
     transition: (toStatus: AlertStatus, note?: string) =>
       transitionAlert(authFetch, id as number, toStatus, note).then(invalidate),
     addNote: (body: string) => addAlertNote(authFetch, id as number, body).then(invalidate),

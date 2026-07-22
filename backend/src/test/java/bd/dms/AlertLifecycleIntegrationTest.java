@@ -2,7 +2,6 @@ package bd.dms;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 import bd.dms.alert.Alert;
@@ -88,6 +87,23 @@ class AlertLifecycleIntegrationTest {
 
         assertThat(alerts.visibleDetail(coordinator, alert.getId())).isPresent();
         assertThat(alerts.visibleDetail(campManager, alert.getId())).isEmpty();
+    }
+
+    @Test
+    void campManagerCanRaiseASecurityIncidentOnTheirOwnCampButImmediatelyLosesAccessToIt() {
+        AppUser coordinator = users.findByUsername("coordinator").orElseThrow();
+        AppUser campManager = users.findByUsername("camp_manager").orElseThrow();
+        Long campId = camps.findByCode("jam-kurigram-sadar").orElseThrow().getId();
+
+        Alert alert = alerts.raise(campManager, AlertType.SECURITY_INCIDENT, campId, "Reporting a breach for command to handle");
+
+        assertThat(alert.getStatus()).isEqualTo(AlertStatus.NEW);
+        assertThat(alerts.visibleDetail(campManager, alert.getId()))
+                .as("hands off to command immediately after raising")
+                .isEmpty();
+        assertThat(alerts.visibleDetail(coordinator, alert.getId())).isPresent();
+        assertThatThrownBy(() -> alerts.transition(campManager, alert.getId(), AlertStatus.ACKNOWLEDGED, null))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
