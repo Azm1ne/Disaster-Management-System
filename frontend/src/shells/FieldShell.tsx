@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
+import { FamilyPanel } from '@/family/FamilyPanel'
 import type { RoleConfig } from '@/roles'
 
 /**
@@ -44,18 +45,22 @@ export function FieldShell({ config }: { config: RoleConfig }) {
         </h1>
         <p className="mt-3 text-lg text-ink-muted">{t(`roleBlurb.${config.key}`)}</p>
 
-        <div className="mt-8 rounded-2xl border border-line bg-surface p-6 sm:p-8">
-          <h2 className="text-xl font-semibold">{t('shell.placeholderTitle')}</h2>
-          <p className="mt-3 text-ink-muted">
-            {t('shell.placeholderBody', { role: roleLabel })}
-          </p>
-          <button
-            type="button"
-            className="mt-6 h-12 w-full rounded-xl bg-signal text-base font-semibold text-signal-ink transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-bg sm:w-auto sm:px-8"
-          >
-            {t('shell.primaryAction')}
-          </button>
-        </div>
+        {config.apiRole === 'VICTIM' ? (
+          <FamilyPanel />
+        ) : (
+          <div className="mt-8 rounded-2xl border border-line bg-surface p-6 sm:p-8">
+            <h2 className="text-xl font-semibold">{t('shell.placeholderTitle')}</h2>
+            <p className="mt-3 text-ink-muted">
+              {t('shell.placeholderBody', { role: roleLabel })}
+            </p>
+            <button
+              type="button"
+              className="mt-6 h-12 w-full rounded-xl bg-signal text-base font-semibold text-signal-ink transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-bg sm:w-auto sm:px-8"
+            >
+              {t('shell.primaryAction')}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   )

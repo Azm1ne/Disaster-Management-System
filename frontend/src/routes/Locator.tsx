@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import { LanguageToggle } from '@/components/LanguageToggle'
+import { ReunificationSearch } from '@/family/ReunificationSearch'
 import { fetchPublicCamps, type LocatorCamp } from '@/world/api'
 import { BANGLADESH_DELTA_CENTER, TILES } from '@/world/mapTheme'
 
@@ -88,6 +89,8 @@ export default function Locator() {
               </div>
             ))}
           </div>
+
+          <ReunificationSearch />
         </section>
 
         <section className="min-h-80 flex-1 overflow-hidden rounded-2xl border border-line">
