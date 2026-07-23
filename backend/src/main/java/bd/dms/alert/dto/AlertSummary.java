@@ -9,6 +9,7 @@ public record AlertSummary(
         AlertType type,
         AlertStatus status,
         Long campId,
+        String resourceType,
         String description,
         Long raisedByUserId,
         long raisedAtTick,

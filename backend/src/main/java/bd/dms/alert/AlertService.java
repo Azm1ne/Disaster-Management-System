@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AlertService {
 
+    private static final List<AlertStatus> CLOSED_STATUSES = List.of(AlertStatus.RESOLVED, AlertStatus.CLOSED);
+
     private final AlertRepository alerts;
     private final AlertTransitionRepository transitions;
     private final CampRepository camps;
@@ -60,8 +62,28 @@ public class AlertService {
             throw new AccessDeniedException("Not entitled to raise an alert on this camp");
         }
         long tick = engine.currentTick();
-        Alert alert = alerts.save(
-                new Alert(type, camp.getId(), description, actor.getId(), tick, tick + AlertSla.thresholdTicks(type)));
+        Alert alert = alerts.save(new Alert(
+                type, camp.getId(), null, description, actor.getId(), tick, tick + AlertSla.thresholdTicks(type)));
+        events.publishEvent(new AlertChangedEvent(alert.getId()));
+        return alert;
+    }
+
+    @Transactional
+    public Alert raiseFromForecast(Long campId, String resourceType, String description) {
+        List<Alert> open = alerts.findByCampIdAndTypeAndResourceTypeAndStatusNotIn(
+                campId, AlertType.RESOURCE_SHORTAGE, resourceType, CLOSED_STATUSES);
+        if (!open.isEmpty()) {
+            return open.get(0);
+        }
+        long tick = engine.currentTick();
+        Alert alert = alerts.save(new Alert(
+                AlertType.RESOURCE_SHORTAGE,
+                campId,
+                resourceType,
+                description,
+                null,
+                tick,
+                tick + AlertSla.thresholdTicks(AlertType.RESOURCE_SHORTAGE)));
         events.publishEvent(new AlertChangedEvent(alert.getId()));
         return alert;
     }

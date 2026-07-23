@@ -8,9 +8,10 @@ import { DemoBadge, SimulationControlPanel } from '@/sim/SimulationControlPanel'
 import { MyCampArrivalsPanel } from '@/family/FamilyArrivalsPanel'
 import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
+import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
 import type { RoleConfig } from '@/roles'
 
-const NAV_PLACEHOLDER = ['camps', 'resources', 'people'] as const
+const NAV_SOON = ['camps', 'people'] as const
 
 /**
  * The dense situation-room shell for the people running the operation (Coordinator, Admin,
@@ -21,6 +22,7 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
+  const [tab, setTab] = useState<'overview' | 'forecasts'>('overview')
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
 
@@ -37,11 +39,30 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
             </span>
           </div>
           <nav className="flex flex-col gap-0.5 px-3 py-2">
-            <span className="rounded-md bg-surface-2 px-3 py-2 text-sm font-medium text-ink">
+            <button
+              type="button"
+              onClick={() => setTab('overview')}
+              className={
+                tab === 'overview'
+                  ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                  : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+              }
+            >
               {t('nav.overview')}
-            </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('forecasts')}
+              className={
+                tab === 'forecasts'
+                  ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                  : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+              }
+            >
+              {t('nav.forecasts')}
+            </button>
             <span className="rounded-md px-3 py-2 text-sm text-ink">{t('nav.alerts')}</span>
-            {NAV_PLACEHOLDER.map((item) => (
+            {NAV_SOON.map((item) => (
               <span
                 key={item}
                 className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-ink-muted"
@@ -90,8 +111,14 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
               {config.apiRole === 'CAMP_MANAGER' && <MyCampPanel />}
               {config.apiRole === 'CAMP_MANAGER' && <MyCampArrivalsPanel />}
               <div className="min-h-0 flex-1 overflow-y-auto">
-                <WorldWorkspace />
-                <AlertWorkspace />
+                {tab === 'overview' ? (
+                  <>
+                    <WorldWorkspace />
+                    <AlertWorkspace />
+                  </>
+                ) : (
+                  <ForecastWorkspace />
+                )}
               </div>
             </main>
             {simOpen && <SimulationControlPanel onClose={() => setSimOpen(false)} />}

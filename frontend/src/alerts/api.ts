@@ -15,7 +15,8 @@ export interface AlertSummary {
   status: AlertStatus
   campId: number
   description: string
-  raisedByUserId: number
+  resourceType: 'WATER' | 'FOOD' | 'MEDICAL' | null
+  raisedByUserId: number | null
   raisedAtTick: number
   slaDeadlineTick: number
   canAct: boolean

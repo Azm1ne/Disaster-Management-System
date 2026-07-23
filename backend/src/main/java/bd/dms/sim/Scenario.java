@@ -61,6 +61,34 @@ public final class Scenario {
 
     // The seeded world (must equal V4/V5). Jamuna camps carry a scripted surge; the Patuakhali
     // cyclone camps are quiescent (surgeAdd 0) so they hold their baseline for every tick.
+    /** Which of the three data-quality conditions this camp+resource combo is scripted to have.
+     * NORMAL is every combo except the two below — one is scripted stale-prone (its reports
+     * arrive with gaps), one conflicting-prone (its reports sometimes disagree for the same
+     * tick). Deterministic and fixed, so forecast confidence behaviour is reproducible and
+     * assertable, exactly like the rest of the scripted scenario. */
+    public enum DataQualityCondition { NORMAL, STALE_PRONE, CONFLICTING_PRONE }
+
+    private static final String STALE_PRONE_CAMP = "jam-roumari";
+    private static final String STALE_PRONE_RESOURCE = "WATER";
+    private static final String CONFLICTING_PRONE_CAMP = "jam-saghata";
+    private static final String CONFLICTING_PRONE_RESOURCE = "FOOD";
+
+    public static DataQualityCondition dataQualityCondition(String campCode, String resourceType) {
+        if (STALE_PRONE_CAMP.equals(campCode) && STALE_PRONE_RESOURCE.equals(resourceType)) {
+            return DataQualityCondition.STALE_PRONE;
+        }
+        if (CONFLICTING_PRONE_CAMP.equals(campCode) && CONFLICTING_PRONE_RESOURCE.equals(resourceType)) {
+            return DataQualityCondition.CONFLICTING_PRONE;
+        }
+        return DataQualityCondition.NORMAL;
+    }
+
+    /** Stale-prone combos only get an observation written every 3rd tick — a real reporting gap. */
+    public static boolean shouldRecordObservation(String campCode, String resourceType, long tick) {
+        return dataQualityCondition(campCode, resourceType) != DataQualityCondition.STALE_PRONE
+                || tick % 3 == 0;
+    }
+
     private static final List<Baseline> BASELINES = List.of(
             // Jamuna flood — active, riverine camps surge toward/over capacity.
             new Baseline("jam-kurigram-sadar", 1080, OPEN, 0, 250),
