@@ -9,6 +9,7 @@ import bd.dms.family.FamilyMemberRepository;
 import bd.dms.forecast.ForecastResult;
 import bd.dms.forecast.ForecastService;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,11 +94,16 @@ class AllocationPriorityVsFcfsTest {
                         new Camp(highSeverityCamp, highGap, highSeverity)),
                 poolSize);
 
-        double priorityUnmetSeverityWeighted = fulfillInOrder(
-                List.of(
-                        new Camp(highSeverityCamp, highGap, highSeverity), // higher priority first
-                        new Camp(lowSeverityCamp, lowGap, lowSeverity)),
-                poolSize);
+        List<Camp> priorityOrder = List.of(
+                        new Camp(lowSeverityCamp, lowGap, lowSeverity),
+                        new Camp(highSeverityCamp, highGap, highSeverity))
+                .stream()
+                .sorted(Comparator.comparingDouble(
+                                (Camp camp) -> scoring.priorityScore(camp.severity(), 0.0, 0.0, 0.0))
+                        .reversed())
+                .toList();
+
+        double priorityUnmetSeverityWeighted = fulfillInOrder(priorityOrder, poolSize);
 
         System.out.printf(
                 "priority-vs-FCFS: FCFS unmet severity-weighted shortage=%.2f, priority unmet=%.2f%n",
