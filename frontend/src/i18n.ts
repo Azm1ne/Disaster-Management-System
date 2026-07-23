@@ -171,6 +171,7 @@ const resources = {
         addNote: 'Add a note',
         timeline: 'Timeline',
         systemActor: 'System (SLA)',
+        forecastShortage: 'Projected {{resource}} exhaustion in {{ticks}} ticks ({{confidence}} confidence)',
       },
 
       family: {
@@ -405,6 +406,7 @@ const resources = {
         addNote: 'নোট যোগ করুন',
         timeline: 'সময়রেখা',
         systemActor: 'সিস্টেম (এসএলএ)',
+        forecastShortage: '{{ticks}} টিকের মধ্যে {{resource}} নিঃশেষ হওয়ার আশঙ্কা ({{confidence}} আস্থা)',
       },
 
       family: {

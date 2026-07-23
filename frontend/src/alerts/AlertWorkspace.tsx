@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { createAlert, raiseDemoAlert, type AlertStatus, type AlertSummary, type AlertType } from '@/alerts/api'
@@ -20,6 +21,34 @@ const ALERT_TYPES: AlertType[] = [
   'SECURITY_INCIDENT',
   'INFRASTRUCTURE_DAMAGE',
 ]
+
+const CONFIDENCE_KEY: Record<string, string> = {
+  HIGH: 'forecasts.confidenceHigh',
+  MEDIUM: 'forecasts.confidenceMedium',
+  LOW: 'forecasts.confidenceLow',
+}
+
+/**
+ * Forecast-originated RESOURCE_SHORTAGE alerts carry a JSON payload (resourceType,
+ * ticksRemaining, confidence) as their description instead of prose — render that through the
+ * bilingual template rather than dumping raw JSON at the user. Manually-raised alerts (or a
+ * malformed payload) fall back to the description as free text.
+ */
+function describeAlert(alert: AlertSummary, t: TFunction): string {
+  if (alert.type !== 'RESOURCE_SHORTAGE' || !alert.resourceType) {
+    return alert.description
+  }
+  try {
+    const parsed = JSON.parse(alert.description) as { ticksRemaining: number; confidence: string }
+    return t('alertLifecycle.forecastShortage', {
+      resource: t(`camp.resource.${alert.resourceType}`),
+      ticks: parsed.ticksRemaining,
+      confidence: t(CONFIDENCE_KEY[parsed.confidence.toUpperCase()]),
+    })
+  } catch {
+    return alert.description
+  }
+}
 
 /**
  * The alert lifecycle workspace: a list of what this role is entitled to see, and a detail
@@ -65,7 +94,7 @@ export function AlertWorkspace() {
       {detail && (
         <section className="mt-4 rounded-lg border border-line p-4">
           <h3 className="text-sm font-semibold text-ink">{t(`alertLifecycle.type.${detail.summary.type}`)}</h3>
-          <p className="mt-1 text-sm text-ink-muted">{detail.summary.description}</p>
+          <p className="mt-1 text-sm text-ink-muted">{describeAlert(detail.summary, t)}</p>
           <p className="mt-2 font-mono text-xs text-ink-muted">
             {t(`alertLifecycle.status.${detail.summary.status}`)}
           </p>
