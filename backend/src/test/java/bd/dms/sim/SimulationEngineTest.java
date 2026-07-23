@@ -114,6 +114,22 @@ class SimulationEngineTest {
     }
 
     @Test
+    void resetClearsThePriorObservationHistory() {
+        engine.reset();
+        engine.advance();
+        engine.advance();
+
+        engine.reset();
+
+        // reset() re-applies tick 0 (which appends its own baseline observation rows), but must
+        // not leave the ticks written by the advances before it lying around unboundedly.
+        Long kurigramCampId = camps.findByCode("jam-kurigram-sadar").orElseThrow().getId();
+        List<CampResourceObservation> waterHistory = observations
+                .findByCampIdAndResourceTypeAndTickGreaterThanEqualOrderByTickAsc(kurigramCampId, "WATER", 0);
+        assertThat(waterHistory).extracting(CampResourceObservation::getTick).containsOnly(0L);
+    }
+
+    @Test
     void staleProneComboSkipsObservationsOnNonMultipleOfThreeTicks() {
         engine.reset();
         for (int i = 0; i < 2; i++) {

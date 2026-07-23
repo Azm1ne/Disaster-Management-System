@@ -68,6 +68,7 @@ public class SimulationEngine {
     public synchronized SimulationClock reset() {
         tick = 0;
         running = false;
+        observations.deleteAll();
         apply(Scenario.stateAt(0));
         return publish(true);
     }

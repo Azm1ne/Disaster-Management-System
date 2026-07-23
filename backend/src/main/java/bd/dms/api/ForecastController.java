@@ -15,10 +15,12 @@ import bd.dms.world.CampRepository;
 import bd.dms.world.CampResource;
 import bd.dms.world.CampResourceRepository;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  * seeds a steep synthetic depletion and evaluates it through the same real forecast-then-alert
  * path {@code ForecastAlertListener} uses on every tick — the scripted Scenario structurally
  * never crosses the shortage threshold on its own (see Task 5b's rationale), so this is the only
- * way to demonstrate the pipeline live. */
+ * way to demonstrate the pipeline live. The synthetic rows are transient: they are seeded into
+ * {@code camp_resource_observations} only for the duration of the request, then deleted once the
+ * forecast has been read and the alert raised, so {@code SimulationEngine} remains the sole
+ * writer of that table's lasting history. */
 @RestController
 @RequestMapping("/forecasts")
 public class ForecastController {
@@ -79,11 +84,15 @@ public class ForecastController {
     }
 
     @PostMapping("/demo/{campId}/{resourceType}")
+    @Transactional
     public ResponseEntity<Void> demo(
             @PathVariable Long campId, @PathVariable String resourceType, Authentication authentication) {
         AppUser actor = users.findByUsername(authentication.getName()).orElseThrow();
         if (actor.getRole() != Role.COORDINATOR && actor.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Only Coordinator/Admin can trigger a demo forecast");
+        }
+        if (!RESOURCE_TYPES.contains(resourceType)) {
+            throw new IllegalArgumentException("Unknown resource type: " + resourceType);
         }
         BigDecimal startQuantity = campResources.findByCampId(campId).stream()
                 .filter(r -> r.getResourceType().equals(resourceType))
@@ -97,13 +106,21 @@ public class ForecastController {
         // baseTick (>= the last seeded observation) keeps the forecast reading its own data as
         // "as of right now" regardless of where the real simulation clock happens to be.
         long baseTick = Math.max(engine.currentTick(), 4L);
+        List<Long> seededTicks = new ArrayList<>();
         for (int i = 0; i <= 4; i++) {
             long observedTick = baseTick - 4 + i;
             BigDecimal quantity = startQuantity.multiply(BigDecimal.valueOf(1.0 - i * 0.2));
             observations.save(new CampResourceObservation(campId, resourceType, quantity, observedTick));
+            seededTicks.add(observedTick);
         }
 
-        forecastAlertListener.evaluate(campId, resourceType, baseTick);
+        try {
+            forecastAlertListener.evaluate(campId, resourceType, baseTick);
+        } finally {
+            // The alert (if any) is already persisted independently in the alerts table; the
+            // synthetic observation rows must not outlive this request (see class Javadoc).
+            observations.deleteByCampIdAndResourceTypeAndTickIn(campId, resourceType, seededTicks);
+        }
         return ResponseEntity.ok().build();
     }
 }

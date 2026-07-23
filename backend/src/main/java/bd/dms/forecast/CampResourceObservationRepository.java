@@ -7,4 +7,6 @@ public interface CampResourceObservationRepository extends JpaRepository<CampRes
 
     List<CampResourceObservation> findByCampIdAndResourceTypeAndTickGreaterThanEqualOrderByTickAsc(
             Long campId, String resourceType, long fromTick);
+
+    void deleteByCampIdAndResourceTypeAndTickIn(Long campId, String resourceType, List<Long> ticks);
 }
