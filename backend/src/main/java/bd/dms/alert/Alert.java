@@ -31,6 +31,9 @@ public class Alert {
     @Column(name = "camp_id", nullable = false)
     private Long campId;
 
+    @Column(name = "resource_type")
+    private String resourceType;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AlertStatus status;
@@ -38,7 +41,7 @@ public class Alert {
     @Column(nullable = false, length = 2000)
     private String description;
 
-    @Column(name = "raised_by_user_id", nullable = false)
+    @Column(name = "raised_by_user_id")
     private Long raisedByUserId;
 
     @Column(name = "raised_at_tick", nullable = false)
@@ -60,12 +63,14 @@ public class Alert {
     public Alert(
             AlertType type,
             Long campId,
+            String resourceType,
             String description,
             Long raisedByUserId,
             long raisedAtTick,
             long slaDeadlineTick) {
         this.type = type;
         this.campId = campId;
+        this.resourceType = resourceType;
         this.status = AlertStatus.NEW;
         this.description = description;
         this.raisedByUserId = raisedByUserId;
@@ -85,6 +90,10 @@ public class Alert {
 
     public Long getCampId() {
         return campId;
+    }
+
+    public String getResourceType() {
+        return resourceType;
     }
 
     public AlertStatus getStatus() {

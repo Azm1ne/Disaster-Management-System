@@ -101,6 +101,7 @@ public class AlertController {
                 alert.getType(),
                 alert.getStatus(),
                 alert.getCampId(),
+                alert.getResourceType(),
                 alert.getDescription(),
                 alert.getRaisedByUserId(),
                 alert.getRaisedAtTick(),

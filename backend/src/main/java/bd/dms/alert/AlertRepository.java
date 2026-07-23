@@ -8,4 +8,7 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findByCampIdIn(List<Long> campIds);
 
     List<Alert> findByStatusIn(List<AlertStatus> statuses);
+
+    List<Alert> findByCampIdAndTypeAndResourceTypeAndStatusNotIn(
+            Long campId, AlertType type, String resourceType, List<AlertStatus> excludedStatuses);
 }
