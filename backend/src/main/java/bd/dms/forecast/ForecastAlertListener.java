@@ -40,14 +40,22 @@ public class ForecastAlertListener {
         long tick = event.clock().tick();
         for (Camp camp : camps.findAll()) {
             for (String resourceType : RESOURCE_TYPES) {
-                ForecastResult forecast = forecastService.forecast(camp.getId(), resourceType, tick);
-                if (forecast.ticksRemainingWorstCase() == null
-                        || forecast.ticksRemainingWorstCase() > SHORTAGE_THRESHOLD_TICKS) {
-                    continue;
-                }
-                alertService.raiseFromForecast(camp.getId(), resourceType, describe(forecast));
+                evaluate(camp.getId(), resourceType, tick);
             }
         }
+    }
+
+    /** Forecasts one camp/resource at {@code tick} and raises a deduped RESOURCE_SHORTAGE alert if
+     * the worst-case exhaustion estimate is imminent. Called from every simulated tick, and also
+     * directly by the DEMO trigger endpoint so a demo can show the same real pipeline on synthetic
+     * data without waiting for the scripted scenario to (structurally never) cross the threshold. */
+    public void evaluate(Long campId, String resourceType, long tick) {
+        ForecastResult forecast = forecastService.forecast(campId, resourceType, tick);
+        if (forecast.ticksRemainingWorstCase() == null
+                || forecast.ticksRemainingWorstCase() > SHORTAGE_THRESHOLD_TICKS) {
+            return;
+        }
+        alertService.raiseFromForecast(campId, resourceType, describe(forecast));
     }
 
     private String describe(ForecastResult forecast) {
