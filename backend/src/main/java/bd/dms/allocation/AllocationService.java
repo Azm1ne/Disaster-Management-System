@@ -25,6 +25,12 @@ public class AllocationService {
     private static final List<AllocationStatus> NON_REJECTED = List.of(
             AllocationStatus.RECOMMENDED, AllocationStatus.APPROVED, AllocationStatus.MODIFIED);
 
+    /** Camp managers only see allocations actually approved for their camp (spec item 49 /
+     * {@code allocations.subtitleCampManager}) — not still-pending {@code RECOMMENDED} rows, and
+     * not {@code REJECTED} ones. */
+    private static final List<AllocationStatus> APPROVED_FOR_CAMP_MANAGER = List.of(
+            AllocationStatus.APPROVED, AllocationStatus.MODIFIED);
+
     private final AllocationDecisionRepository allocations;
     private final AllocationTransitionRepository transitions;
     private final AllocationScoringService scoring;
@@ -112,7 +118,7 @@ public class AllocationService {
         List<Long> campIds = assignments.findByUserId(actor.getId()).stream()
                 .map(bd.dms.world.CampAssignment::getCampId)
                 .toList();
-        return allocations.findByTargetCampIdIn(campIds);
+        return allocations.findByTargetCampIdInAndStatusIn(campIds, APPROVED_FOR_CAMP_MANAGER);
     }
 
     /** Camp managers are read-only for allocations (see spec item 49) — only Coordinator/Admin

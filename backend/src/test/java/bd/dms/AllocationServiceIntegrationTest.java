@@ -190,4 +190,28 @@ class AllocationServiceIntegrationTest {
         freshRecommendation(BigDecimal.ONE);
         assertThat(allocationService.visibleTo(coordinator())).isNotEmpty();
     }
+
+    @Test
+    void campManagerOnlySeesApprovedAllocationsNotRecommendedOrRejectedOnes() {
+        Camp managedCamp = camps.findByCode("jam-kurigram-sadar").orElseThrow();
+        Camp otherSource = camps.findAll().stream()
+                .filter(c -> !c.getId().equals(managedCamp.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        AllocationDecision recommended = allocations.save(new AllocationDecision(
+                "WATER", otherSource.getId(), managedCamp.getId(), BigDecimal.ONE, 0.5, 0.5, 0.5, 0.5, 0.5, 0));
+        AllocationDecision toReject = allocations.save(new AllocationDecision(
+                "WATER", otherSource.getId(), managedCamp.getId(), BigDecimal.ONE, 0.5, 0.5, 0.5, 0.5, 0.5, 0));
+        AllocationDecision toApprove = allocations.save(new AllocationDecision(
+                "WATER", otherSource.getId(), managedCamp.getId(), BigDecimal.ONE, 0.5, 0.5, 0.5, 0.5, 0.5, 0));
+
+        allocationService.transition(coordinator(), toReject.getId(), AllocationStatus.REJECTED, null, null);
+        AllocationDecision approved = allocationService.transition(
+                coordinator(), toApprove.getId(), AllocationStatus.APPROVED, null, null);
+
+        assertThat(allocationService.visibleTo(campManager()))
+                .extracting(AllocationDecision::getId)
+                .containsExactly(approved.getId());
+    }
 }

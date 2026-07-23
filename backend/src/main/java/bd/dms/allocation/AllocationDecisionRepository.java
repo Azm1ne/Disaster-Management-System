@@ -8,6 +8,8 @@ public interface AllocationDecisionRepository extends JpaRepository<AllocationDe
 
     List<AllocationDecision> findByTargetCampIdIn(List<Long> campIds);
 
+    List<AllocationDecision> findByTargetCampIdInAndStatusIn(List<Long> campIds, List<AllocationStatus> statuses);
+
     Optional<AllocationDecision> findBySourceCampIdAndTargetCampIdAndResourceTypeAndStatus(
             Long sourceCampId, Long targetCampId, String resourceType, AllocationStatus status);
 
