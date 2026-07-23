@@ -3,16 +3,23 @@ package bd.dms.api;
 import bd.dms.forecast.CampResourceObservation;
 import bd.dms.forecast.CampResourceObservationRepository;
 import bd.dms.forecast.ForecastAlertListener;
+import bd.dms.forecast.ForecastResult;
+import bd.dms.forecast.ForecastService;
+import bd.dms.forecast.dto.ForecastView;
 import bd.dms.sim.SimulationEngine;
 import bd.dms.user.AppUser;
 import bd.dms.user.Role;
 import bd.dms.user.UserRepository;
+import bd.dms.world.Camp;
+import bd.dms.world.CampRepository;
 import bd.dms.world.CampResource;
 import bd.dms.world.CampResourceRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,23 +34,48 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/forecasts")
 public class ForecastController {
 
+    private static final List<String> RESOURCE_TYPES = List.of("WATER", "FOOD", "MEDICAL");
+
     private final CampResourceRepository campResources;
     private final CampResourceObservationRepository observations;
     private final ForecastAlertListener forecastAlertListener;
     private final SimulationEngine engine;
     private final UserRepository users;
+    private final CampRepository camps;
+    private final ForecastService forecastService;
 
     public ForecastController(
             CampResourceRepository campResources,
             CampResourceObservationRepository observations,
             ForecastAlertListener forecastAlertListener,
             SimulationEngine engine,
-            UserRepository users) {
+            UserRepository users,
+            CampRepository camps,
+            ForecastService forecastService) {
         this.campResources = campResources;
         this.observations = observations;
         this.forecastAlertListener = forecastAlertListener;
         this.engine = engine;
         this.users = users;
+        this.camps = camps;
+        this.forecastService = forecastService;
+    }
+
+    @GetMapping
+    public List<ForecastView> forecasts() {
+        long tick = engine.currentTick();
+        return camps.findAll().stream()
+                .flatMap(camp -> RESOURCE_TYPES.stream().map(type -> toView(camp, type, tick)))
+                .toList();
+    }
+
+    private ForecastView toView(Camp camp, String resourceType, long tick) {
+        ForecastResult r = forecastService.forecast(camp.getId(), resourceType, tick);
+        return new ForecastView(
+                camp.getId(), camp.getCode(), camp.getNameEn(), camp.getNameBn(), resourceType,
+                r.currentQuantity(), r.ratePerTick(), r.ticksRemainingEstimate(),
+                r.ticksRemainingWorstCase(), r.ticksRemainingBestCase(), r.confidenceScore(),
+                r.confidenceLevel(), r.latestObservedTick(), r.sampleCount());
     }
 
     @PostMapping("/demo/{campId}/{resourceType}")
