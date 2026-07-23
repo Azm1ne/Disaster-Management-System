@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/simulation/clock").authenticated()
                         .requestMatchers(HttpMethod.POST, "/simulation/**")
                                 .hasAnyRole("ADMIN", "COORDINATOR")
+                        .requestMatchers("/alerts/**")
+                                .hasAnyRole("ADMIN", "COORDINATOR", "CAMP_MANAGER")
                         // A victim's own group: register it, read it, tap "arrived" on it.
                         .requestMatchers("/family/**").hasRole("VICTIM")
                         // The camp-scoped staff side of arrival — per-camp entitlement is

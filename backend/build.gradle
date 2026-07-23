@@ -37,6 +37,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.awaitility:awaitility:4.2.2'
     testRuntimeOnly 'com.h2database:h2'
 
     // Testcontainers: the world-read seam (Seam 1) runs against a real Postgres so geometry
