@@ -2,8 +2,11 @@ package bd.dms.sim;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import bd.dms.forecast.CampResourceObservation;
+import bd.dms.forecast.CampResourceObservationRepository;
 import bd.dms.world.Camp;
 import bd.dms.world.CampRepository;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,6 +28,9 @@ class SimulationEngineTest {
 
     @Autowired
     private CampRepository camps;
+
+    @Autowired
+    private CampResourceObservationRepository observations;
 
     private Map<String, Camp> campsByCode() {
         return camps.findAll().stream().collect(Collectors.toMap(Camp::getCode, Function.identity()));
@@ -90,5 +96,33 @@ class SimulationEngineTest {
         assertThat(engine.clock().running()).isTrue();
         engine.pause();
         assertThat(engine.clock().running()).isFalse();
+    }
+
+    @Test
+    void advanceAppendsAResourceObservationForEveryCampResource() {
+        engine.reset();
+        engine.advance();
+
+        Long kurigramCampId = camps.findByCode("jam-kurigram-sadar").orElseThrow().getId();
+        List<CampResourceObservation> waterHistory = observations
+                .findByCampIdAndResourceTypeAndTickGreaterThanEqualOrderByTickAsc(kurigramCampId, "WATER", 0);
+        // Shared H2 instance across test methods (no per-test rollback): assert this advance's
+        // row is present rather than assuming it's the last, since other methods in this class
+        // also append to the same append-only table and JUnit doesn't guarantee method order.
+        assertThat(waterHistory).isNotEmpty();
+        assertThat(waterHistory).extracting(CampResourceObservation::getTick).contains(1L);
+    }
+
+    @Test
+    void staleProneComboSkipsObservationsOnNonMultipleOfThreeTicks() {
+        engine.reset();
+        for (int i = 0; i < 2; i++) {
+            engine.advance(); // ticks 1, 2 — neither is a multiple of 3
+        }
+
+        Long roumariCampId = camps.findByCode("jam-roumari").orElseThrow().getId();
+        List<CampResourceObservation> history = observations
+                .findByCampIdAndResourceTypeAndTickGreaterThanEqualOrderByTickAsc(roumariCampId, "WATER", 0);
+        assertThat(history).extracting(CampResourceObservation::getTick).doesNotContain(1L, 2L);
     }
 }

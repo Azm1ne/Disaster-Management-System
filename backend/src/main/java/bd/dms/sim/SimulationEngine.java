@@ -1,5 +1,7 @@
 package bd.dms.sim;
 
+import bd.dms.forecast.CampResourceObservation;
+import bd.dms.forecast.CampResourceObservationRepository;
 import bd.dms.world.Camp;
 import bd.dms.world.CampRepository;
 import bd.dms.world.CampResource;
@@ -32,6 +34,7 @@ public class SimulationEngine {
 
     private final CampRepository camps;
     private final CampResourceRepository resources;
+    private final CampResourceObservationRepository observations;
     private final ApplicationEventPublisher events;
 
     private long tick = 0;
@@ -39,9 +42,13 @@ public class SimulationEngine {
     private double speed = 1.0;
 
     public SimulationEngine(
-            CampRepository camps, CampResourceRepository resources, ApplicationEventPublisher events) {
+            CampRepository camps,
+            CampResourceRepository resources,
+            CampResourceObservationRepository observations,
+            ApplicationEventPublisher events) {
         this.camps = camps;
         this.resources = resources;
+        this.observations = observations;
         this.events = events;
     }
 
@@ -121,7 +128,23 @@ public class SimulationEngine {
             BigDecimal quantity = state.camp(code).resources().get(resource.getResourceType());
             if (quantity != null) {
                 resource.setQuantity(quantity);
+                recordObservation(resource.getCampId(), code, resource.getResourceType(), quantity);
             }
+        }
+    }
+
+    /** Appends one (or, for the scripted conflicting-prone combo, two disagreeing) observation
+     * rows for this tick — the same sole-writer discipline as camp_resources, just an append
+     * instead of an overwrite. Skipped entirely for the scripted stale-prone combo except every
+     * 3rd tick, so its most-recent-on-record reading lags the current tick by design. */
+    private void recordObservation(Long campId, String campCode, String resourceType, BigDecimal quantity) {
+        if (!Scenario.shouldRecordObservation(campCode, resourceType, tick)) {
+            return;
+        }
+        observations.save(new CampResourceObservation(campId, resourceType, quantity, tick));
+        if (Scenario.dataQualityCondition(campCode, resourceType) == Scenario.DataQualityCondition.CONFLICTING_PRONE) {
+            BigDecimal disagreeing = quantity.multiply(BigDecimal.valueOf(1.2));
+            observations.save(new CampResourceObservation(campId, resourceType, disagreeing, tick));
         }
     }
 
