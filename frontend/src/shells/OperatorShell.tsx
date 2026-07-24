@@ -9,6 +9,7 @@ import { MyCampArrivalsPanel } from '@/family/FamilyArrivalsPanel'
 import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
+import { AllocationQueueWorkspace } from '@/allocations/AllocationQueueWorkspace'
 import type { RoleConfig } from '@/roles'
 
 const NAV_SOON = ['camps', 'people'] as const
@@ -22,7 +23,7 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'forecasts'>('overview')
+  const [tab, setTab] = useState<'overview' | 'forecasts' | 'allocations'>('overview')
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
 
@@ -60,6 +61,17 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
               }
             >
               {t('nav.forecasts')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('allocations')}
+              className={
+                tab === 'allocations'
+                  ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                  : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+              }
+            >
+              {t('nav.allocations')}
             </button>
             <span className="rounded-md px-3 py-2 text-sm text-ink">{t('nav.alerts')}</span>
             {NAV_SOON.map((item) => (
@@ -116,8 +128,10 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                     <WorldWorkspace />
                     <AlertWorkspace />
                   </>
-                ) : (
+                ) : tab === 'forecasts' ? (
                   <ForecastWorkspace />
+                ) : (
+                  <AllocationQueueWorkspace apiRole={config.apiRole} />
                 )}
               </div>
             </main>
