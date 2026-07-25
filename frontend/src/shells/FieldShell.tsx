@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthContext'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { FamilyPanel } from '@/family/FamilyPanel'
+import { DonorImpactPanel } from '@/funds/DonorImpactPanel'
 import type { RoleConfig } from '@/roles'
 
 /**
@@ -47,6 +48,8 @@ export function FieldShell({ config }: { config: RoleConfig }) {
 
         {config.apiRole === 'VICTIM' ? (
           <FamilyPanel />
+        ) : config.apiRole === 'DONOR' ? (
+          <DonorImpactPanel />
         ) : (
           <div className="mt-8 rounded-2xl border border-line bg-surface p-6 sm:p-8">
             <h2 className="text-xl font-semibold">{t('shell.placeholderTitle')}</h2>
