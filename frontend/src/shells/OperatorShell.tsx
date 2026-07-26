@@ -10,6 +10,7 @@ import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
 import { AllocationQueueWorkspace } from '@/allocations/AllocationQueueWorkspace'
+import { AnomalyReviewWorkspace } from '@/anomalies/AnomalyReviewWorkspace'
 import { BroadcastPanel } from '@/comms/BroadcastPanel'
 import { DmPanel } from '@/comms/DmPanel'
 import { FundsReportWorkspace } from '@/funds/FundsReportWorkspace'
@@ -28,12 +29,13 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
   const [tab, setTab] = useState<
-    'overview' | 'forecasts' | 'allocations' | 'comms' | 'funds' | 'volunteers'
+    'overview' | 'forecasts' | 'allocations' | 'comms' | 'funds' | 'anomalies' | 'volunteers'
   >('overview')
   const canSeeVolunteers = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
   const canSeeFunds = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
+  const canSeeAnomalies = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
 
   return (
     <div data-theme="operator" className="flex min-h-svh flex-col bg-bg text-ink">
@@ -103,6 +105,19 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                 }
               >
                 {t('nav.funds')}
+              </button>
+            )}
+            {canSeeAnomalies && (
+              <button
+                type="button"
+                onClick={() => setTab('anomalies')}
+                className={
+                  tab === 'anomalies'
+                    ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                    : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+                }
+              >
+                {t('nav.anomalies')}
               </button>
             )}
             {canSeeVolunteers && (
@@ -184,6 +199,8 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                   </>
                 ) : tab === 'funds' ? (
                   <FundsReportWorkspace />
+                ) : tab === 'anomalies' ? (
+                  <AnomalyReviewWorkspace />
                 ) : (
                   <VolunteerTaskQueueWorkspace />
                 )}

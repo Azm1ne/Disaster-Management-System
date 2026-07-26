@@ -49,6 +49,7 @@ const resources = {
         allocations: 'Allocations',
         comms: 'Comms',
         funds: 'Funds',
+        anomalies: 'Anomalies',
         volunteers: 'Volunteers',
         people: 'People',
         soon: 'Soon',
@@ -276,6 +277,21 @@ const resources = {
         cancel: 'Cancel',
       },
 
+      anomalies: {
+        title: 'Anomaly review',
+        subtitle: 'Flags raised by the detectors — weigh the innocent explanation before you confirm.',
+        empty: 'No anomalies flagged right now.',
+        innocentExplanationLabel: 'Innocent explanation',
+        confirm: 'Confirm',
+        dismiss: 'Dismiss',
+        detectorAllocationBurst: 'Allocation burst',
+        detectorDuplicateRegistration: 'Duplicate registration',
+        detectorDonationPattern: 'Donation pattern',
+        statusOpen: 'Open',
+        statusConfirmed: 'Confirmed',
+        statusDismissed: 'Dismissed',
+      },
+
       comms: {
         notes: {
           title: 'Case notes',
@@ -420,6 +436,7 @@ const resources = {
         allocations: 'বরাদ্দ',
         comms: 'যোগাযোগ',
         funds: 'তহবিল',
+        anomalies: 'অসঙ্গতি',
         volunteers: 'স্বেচ্ছাসেবক',
         people: 'মানুষ',
         soon: 'শীঘ্রই',
@@ -643,6 +660,21 @@ const resources = {
         reject: 'প্রত্যাখ্যান করুন',
         rejectConfirm: 'প্রত্যাখ্যান নিশ্চিত করুন',
         cancel: 'বাতিল',
+      },
+
+      anomalies: {
+        title: 'অসঙ্গতি পর্যালোচনা',
+        subtitle: 'শনাক্তকারী দ্বারা চিহ্নিত সতর্কতা — নিশ্চিত করার আগে নির্দোষ ব্যাখ্যাটি বিবেচনা করুন।',
+        empty: 'এই মুহূর্তে কোনো অসঙ্গতি চিহ্নিত হয়নি।',
+        innocentExplanationLabel: 'নির্দোষ ব্যাখ্যা',
+        confirm: 'নিশ্চিত করুন',
+        dismiss: 'উড়িয়ে দিন',
+        detectorAllocationBurst: 'বরাদ্দ ঊর্ধ্বগতি',
+        detectorDuplicateRegistration: 'দ্বৈত নিবন্ধন',
+        detectorDonationPattern: 'অনুদানের ধরণ',
+        statusOpen: 'খোলা',
+        statusConfirmed: 'নিশ্চিত',
+        statusDismissed: 'উড়িয়ে দেওয়া হয়েছে',
       },
 
       comms: {
