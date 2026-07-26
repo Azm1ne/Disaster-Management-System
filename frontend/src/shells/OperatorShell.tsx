@@ -12,6 +12,7 @@ import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
 import { AllocationQueueWorkspace } from '@/allocations/AllocationQueueWorkspace'
 import { BroadcastPanel } from '@/comms/BroadcastPanel'
 import { DmPanel } from '@/comms/DmPanel'
+import { FundsReportWorkspace } from '@/funds/FundsReportWorkspace'
 import { VolunteerTaskQueueWorkspace } from '@/volunteers/VolunteerTaskQueueWorkspace'
 import type { RoleConfig } from '@/roles'
 
@@ -26,10 +27,13 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'forecasts' | 'allocations' | 'comms' | 'volunteers'>('overview')
+  const [tab, setTab] = useState<
+    'overview' | 'forecasts' | 'allocations' | 'comms' | 'funds' | 'volunteers'
+  >('overview')
   const canSeeVolunteers = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
+  const canSeeFunds = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
 
   return (
     <div data-theme="operator" className="flex min-h-svh flex-col bg-bg text-ink">
@@ -88,6 +92,19 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
             >
               {t('nav.comms')}
             </button>
+            {canSeeFunds && (
+              <button
+                type="button"
+                onClick={() => setTab('funds')}
+                className={
+                  tab === 'funds'
+                    ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                    : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+                }
+              >
+                {t('nav.funds')}
+              </button>
+            )}
             {canSeeVolunteers && (
               <button
                 type="button"
@@ -165,6 +182,8 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                     <BroadcastPanel />
                     <DmPanel />
                   </>
+                ) : tab === 'funds' ? (
+                  <FundsReportWorkspace />
                 ) : (
                   <VolunteerTaskQueueWorkspace />
                 )}

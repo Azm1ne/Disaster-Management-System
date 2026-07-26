@@ -4,6 +4,7 @@ import { LanguageToggle } from '@/components/LanguageToggle'
 import { FamilyPanel } from '@/family/FamilyPanel'
 import { BroadcastPanel } from '@/comms/BroadcastPanel'
 import { DmPanel } from '@/comms/DmPanel'
+import { DonorImpactPanel } from '@/funds/DonorImpactPanel'
 import { VolunteerFieldPanel } from '@/volunteers/VolunteerFieldPanel'
 import type { RoleConfig } from '@/roles'
 
@@ -50,6 +51,8 @@ export function FieldShell({ config }: { config: RoleConfig }) {
 
         {config.apiRole === 'VICTIM' ? (
           <FamilyPanel />
+        ) : config.apiRole === 'DONOR' ? (
+          <DonorImpactPanel />
         ) : config.apiRole === 'VOLUNTEER' ? (
           <>
             <VolunteerFieldPanel />
