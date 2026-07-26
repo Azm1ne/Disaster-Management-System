@@ -1,5 +1,6 @@
 package bd.dms.family;
 
+import bd.dms.anomaly.DuplicateRegistrationDetector;
 import bd.dms.family.dto.ArrivalStatus;
 import bd.dms.family.dto.CampArrivalGroup;
 import bd.dms.family.dto.CampArrivalsView;
@@ -12,6 +13,7 @@ import bd.dms.user.Role;
 import bd.dms.world.Camp;
 import bd.dms.world.CampAssignmentRepository;
 import bd.dms.world.CampRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.security.access.AccessDeniedException;
@@ -32,16 +34,19 @@ public class FamilyService {
     private final FamilyMemberRepository members;
     private final CampRepository camps;
     private final CampAssignmentRepository assignments;
+    private final DuplicateRegistrationDetector duplicateDetector;
 
     public FamilyService(
             FamilyGroupRepository groups,
             FamilyMemberRepository members,
             CampRepository camps,
-            CampAssignmentRepository assignments) {
+            CampAssignmentRepository assignments,
+            DuplicateRegistrationDetector duplicateDetector) {
         this.groups = groups;
         this.members = members;
         this.camps = camps;
         this.assignments = assignments;
+        this.duplicateDetector = duplicateDetector;
     }
 
     /** Registers a household as a single group. A solo victim submits a one-element member list. */
@@ -53,9 +58,11 @@ public class FamilyService {
                 .orElseThrow(() -> new IllegalArgumentException("Unknown camp: " + request.campId()));
 
         FamilyGroup group = groups.save(new FamilyGroup(ownerUserId, camp.getId(), request.groupName()));
+        List<FamilyMember> savedMembers = new ArrayList<>();
         for (MemberInput member : request.members()) {
-            members.save(new FamilyMember(group.getId(), member.nickname(), member.ageBand()));
+            savedMembers.add(members.save(new FamilyMember(group.getId(), member.nickname(), member.ageBand())));
         }
+        duplicateDetector.scanNewGroup(group, savedMembers);
         return toStatus(group, camp);
     }
 
