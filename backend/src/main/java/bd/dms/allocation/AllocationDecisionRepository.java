@@ -18,4 +18,6 @@ public interface AllocationDecisionRepository extends JpaRepository<AllocationDe
 
     List<AllocationDecision> findByTargetCampIdAndResourceTypeAndStatusIn(
             Long targetCampId, String resourceType, List<AllocationStatus> statuses);
+
+    List<AllocationDecision> findByGeneratedAtTickBetween(long fromTickInclusive, long toTickInclusive);
 }
