@@ -1,5 +1,6 @@
 package bd.dms.funds;
 
+import bd.dms.anomaly.DonationPatternDetector;
 import bd.dms.funds.dto.CampImpact;
 import bd.dms.funds.dto.DisasterFundSummary;
 import bd.dms.funds.dto.DisasterImpact;
@@ -50,16 +51,19 @@ public class FundLedgerService {
     private final ProcurementRepository procurements;
     private final DisasterRepository disasters;
     private final CampRepository camps;
+    private final DonationPatternDetector donationDetector;
 
     public FundLedgerService(
             DonationRepository donations,
             ProcurementRepository procurements,
             DisasterRepository disasters,
-            CampRepository camps) {
+            CampRepository camps,
+            DonationPatternDetector donationDetector) {
         this.donations = donations;
         this.procurements = procurements;
         this.disasters = disasters;
         this.camps = camps;
+        this.donationDetector = donationDetector;
     }
 
     @Transactional
@@ -74,6 +78,7 @@ public class FundLedgerService {
                 .orElseThrow(() -> new IllegalArgumentException("Unknown disaster: " + disasterId));
 
         Donation saved = donations.save(new Donation(actor.getId(), disaster.getId(), amount));
+        donationDetector.scanDonor(saved);
         return toView(saved, disaster);
     }
 
