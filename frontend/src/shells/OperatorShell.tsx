@@ -11,6 +11,7 @@ import { WorldWorkspace } from '@/world/WorldWorkspace'
 import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
 import { AllocationQueueWorkspace } from '@/allocations/AllocationQueueWorkspace'
 import { FundsReportWorkspace } from '@/funds/FundsReportWorkspace'
+import { VolunteerTaskQueueWorkspace } from '@/volunteers/VolunteerTaskQueueWorkspace'
 import type { RoleConfig } from '@/roles'
 
 const NAV_SOON = ['camps', 'people'] as const
@@ -24,7 +25,8 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'forecasts' | 'allocations' | 'funds'>('overview')
+  const [tab, setTab] = useState<'overview' | 'forecasts' | 'allocations' | 'funds' | 'volunteers'>('overview')
+  const canSeeVolunteers = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
   const canSeeFunds = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
@@ -88,6 +90,19 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                 {t('nav.funds')}
               </button>
             )}
+            {canSeeVolunteers && (
+              <button
+                type="button"
+                onClick={() => setTab('volunteers')}
+                className={
+                  tab === 'volunteers'
+                    ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                    : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+                }
+              >
+                {t('nav.volunteers')}
+              </button>
+            )}
             <span className="rounded-md px-3 py-2 text-sm text-ink">{t('nav.alerts')}</span>
             {NAV_SOON.map((item) => (
               <span
@@ -147,8 +162,10 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                   <ForecastWorkspace />
                 ) : tab === 'allocations' ? (
                   <AllocationQueueWorkspace apiRole={config.apiRole} />
-                ) : (
+                ) : tab === 'funds' ? (
                   <FundsReportWorkspace />
+                ) : (
+                  <VolunteerTaskQueueWorkspace />
                 )}
               </div>
             </main>

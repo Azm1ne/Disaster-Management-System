@@ -54,6 +54,7 @@ public class SecurityConfig {
                         // The camp-scoped staff side of arrival — per-camp entitlement is
                         // enforced in FamilyService, mirroring the realtime camp-topic boundary.
                         .requestMatchers("/camp/*/arrivals/**").hasAnyRole("ADMIN", "COORDINATOR", "CAMP_MANAGER")
+                        .requestMatchers("/volunteers/**").hasAnyRole("ADMIN", "COORDINATOR", "VOLUNTEER")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         // Unauthenticated -> 401; authenticated-but-forbidden -> 403.
