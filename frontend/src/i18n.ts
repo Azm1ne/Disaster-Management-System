@@ -47,6 +47,7 @@ const resources = {
         resources: 'Resources',
         forecasts: 'Forecasts',
         allocations: 'Allocations',
+        comms: 'Comms',
         funds: 'Funds',
         volunteers: 'Volunteers',
         people: 'People',
@@ -275,6 +276,38 @@ const resources = {
         cancel: 'Cancel',
       },
 
+      comms: {
+        notes: {
+          title: 'Case notes',
+          empty: 'No notes yet.',
+          add: 'Add',
+          addPlaceholder: 'Add a note',
+          show: 'Show notes',
+          hide: 'Hide notes',
+        },
+        broadcasts: {
+          title: 'Broadcasts',
+          subtitleSender: 'Bilingual announcements to Camp Managers or Volunteers.',
+          subtitleRecipient: 'Announcements from Relief Coordination.',
+          empty: 'No broadcasts yet.',
+          targetLabel: 'Send to',
+          target: { CAMP_MANAGER: 'All Camp Managers', VOLUNTEER: 'All Volunteers' },
+          bodyEnPlaceholder: 'Message (English)',
+          bodyBnPlaceholder: 'বার্তা (বাংলা)',
+          send: 'Broadcast',
+          readCount: '{{count}} read',
+          noReadsYet: 'No one has read this yet.',
+        },
+        dm: {
+          title: 'Direct messages',
+          subtitle: 'Only people you work with directly appear here.',
+          noContacts: 'No one to message yet.',
+          pickContact: 'Choose someone to message.',
+          empty: 'No messages yet — say hello.',
+          placeholder: 'Write a message',
+          send: 'Send',
+        },
+      },
       funds: {
         donate: {
           title: 'Make a donation',
@@ -385,6 +418,7 @@ const resources = {
         resources: 'সম্পদ',
         forecasts: 'পূর্বাভাস',
         allocations: 'বরাদ্দ',
+        comms: 'যোগাযোগ',
         funds: 'তহবিল',
         volunteers: 'স্বেচ্ছাসেবক',
         people: 'মানুষ',
@@ -611,6 +645,38 @@ const resources = {
         cancel: 'বাতিল',
       },
 
+      comms: {
+        notes: {
+          title: 'কেস নোট',
+          empty: 'এখনও কোনো নোট নেই।',
+          add: 'যোগ করুন',
+          addPlaceholder: 'একটি নোট যোগ করুন',
+          show: 'নোট দেখান',
+          hide: 'নোট লুকান',
+        },
+        broadcasts: {
+          title: 'ঘোষণা',
+          subtitleSender: 'ক্যাম্প ব্যবস্থাপক বা স্বেচ্ছাসেবকদের জন্য দ্বিভাষিক ঘোষণা।',
+          subtitleRecipient: 'ত্রাণ সমন্বয় থেকে ঘোষণা।',
+          empty: 'এখনও কোনো ঘোষণা নেই।',
+          targetLabel: 'যাদের কাছে পাঠাবেন',
+          target: { CAMP_MANAGER: 'সব ক্যাম্প ব্যবস্থাপক', VOLUNTEER: 'সব স্বেচ্ছাসেবক' },
+          bodyEnPlaceholder: 'Message (English)',
+          bodyBnPlaceholder: 'বার্তা (বাংলা)',
+          send: 'ঘোষণা পাঠান',
+          readCount: '{{count}} জন পড়েছেন',
+          noReadsYet: 'এখনও কেউ পড়েননি।',
+        },
+        dm: {
+          title: 'সরাসরি বার্তা',
+          subtitle: 'শুধু যাদের সাথে আপনি সরাসরি কাজ করেন তারাই এখানে দেখা যাবে।',
+          noContacts: 'বার্তা পাঠানোর মতো এখনও কেউ নেই।',
+          pickContact: 'বার্তা পাঠানোর জন্য কাউকে বেছে নিন।',
+          empty: 'এখনও কোনো বার্তা নেই — শুভেচ্ছা জানান।',
+          placeholder: 'একটি বার্তা লিখুন',
+          send: 'পাঠান',
+        },
+      },
       funds: {
         donate: {
           title: 'অনুদান দিন',

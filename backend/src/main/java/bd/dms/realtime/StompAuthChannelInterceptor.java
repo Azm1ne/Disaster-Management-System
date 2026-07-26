@@ -29,6 +29,9 @@ import org.springframework.stereotype.Component;
  *   <li>{@code /topic/simulation}, {@code /topic/world} — any authenticated user.</li>
  *   <li>{@code /topic/camp/{id}} — Coordinator and Admin see any camp; a Camp Manager sees only
  *       a camp they are assigned to. Everyone else is refused.</li>
+ *   <li>{@code /topic/broadcasts/{role}} (ticket 12) — only a user of that exact role, or
+ *       Coordinator/Admin oversight, may subscribe.</li>
+ *   <li>{@code /topic/dm/{userId}} (ticket 12) — only that user themselves; a per-user inbox.</li>
  * </ul>
  * A refused subscription throws, so the client receives an ERROR frame and no messages — the
  * transport itself enforces access rather than the UI hiding it.
@@ -39,6 +42,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final String BEARER = "Bearer ";
     private static final String CAMP_PREFIX = "/topic/camp/";
     private static final String COORDINATOR_ALERTS_TOPIC = "/topic/alerts";
+    private static final String BROADCAST_PREFIX = "/topic/broadcasts/";
+    private static final String DM_PREFIX = "/topic/dm/";
 
     private final JwtService jwtService;
     private final UserRepository users;
@@ -101,7 +106,39 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             authorizeCampTopic(authentication, destination.substring(CAMP_PREFIX.length()));
             return;
         }
+        if (destination.startsWith(BROADCAST_PREFIX)) {
+            authorizeBroadcastTopic(authentication, destination.substring(BROADCAST_PREFIX.length()));
+            return;
+        }
+        if (destination.startsWith(DM_PREFIX)) {
+            authorizeDmTopic(authentication, destination.substring(DM_PREFIX.length()));
+            return;
+        }
         throw new AccessDeniedException("Unknown topic: " + destination);
+    }
+
+    private void authorizeBroadcastTopic(Authentication authentication, String roleSegment) {
+        if (hasRole(authentication, "ROLE_COORDINATOR") || hasRole(authentication, "ROLE_ADMIN")) {
+            return; // whole-operation oversight
+        }
+        if (!hasRole(authentication, "ROLE_" + roleSegment)) {
+            throw new AccessDeniedException("Not entitled to this broadcast topic");
+        }
+    }
+
+    private void authorizeDmTopic(Authentication authentication, String userIdSegment) {
+        long topicUserId;
+        try {
+            topicUserId = Long.parseLong(userIdSegment);
+        } catch (NumberFormatException ex) {
+            throw new AccessDeniedException("Malformed DM topic", ex);
+        }
+        Long callerUserId = users.findByUsername(authentication.getName())
+                .orElseThrow(() -> new AccessDeniedException("Unknown principal"))
+                .getId();
+        if (!callerUserId.equals(topicUserId)) {
+            throw new AccessDeniedException("A user may only subscribe to their own DM inbox");
+        }
     }
 
     private void requireOversightRole(Authentication authentication) {

@@ -27,10 +27,11 @@ public class MeController {
 
     /**
      * {@code campIds} are the camps this user manages — what the SPA needs to know which camp
-     * topic to subscribe to. It is empty for every role that manages no camp.
+     * topic to subscribe to. It is empty for every role that manages no camp. {@code userId}
+     * (ticket 12) is what the SPA needs to subscribe to its own {@code /topic/dm/<userId>} inbox.
      */
     public record MeResponse(
-            String username, String role, String nameEn, String nameBn, List<Long> campIds) {}
+            Long userId, String username, String role, String nameEn, String nameBn, List<Long> campIds) {}
 
     @GetMapping("/me")
     public ResponseEntity<MeResponse> me(Authentication authentication) {
@@ -45,6 +46,6 @@ public class MeController {
                 .map(CampAssignment::getCampId)
                 .toList();
         return new MeResponse(
-                user.getUsername(), user.getRole().name(), user.getNameEn(), user.getNameBn(), campIds);
+                user.getId(), user.getUsername(), user.getRole().name(), user.getNameEn(), user.getNameBn(), campIds);
     }
 }

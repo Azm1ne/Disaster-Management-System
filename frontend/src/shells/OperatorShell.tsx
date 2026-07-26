@@ -10,6 +10,8 @@ import { MyCampPanel } from '@/world/MyCampPanel'
 import { WorldWorkspace } from '@/world/WorldWorkspace'
 import { ForecastWorkspace } from '@/forecasts/ForecastWorkspace'
 import { AllocationQueueWorkspace } from '@/allocations/AllocationQueueWorkspace'
+import { BroadcastPanel } from '@/comms/BroadcastPanel'
+import { DmPanel } from '@/comms/DmPanel'
 import { FundsReportWorkspace } from '@/funds/FundsReportWorkspace'
 import { VolunteerTaskQueueWorkspace } from '@/volunteers/VolunteerTaskQueueWorkspace'
 import type { RoleConfig } from '@/roles'
@@ -25,7 +27,9 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'forecasts' | 'allocations' | 'funds' | 'volunteers'>('overview')
+  const [tab, setTab] = useState<
+    'overview' | 'forecasts' | 'allocations' | 'comms' | 'funds' | 'volunteers'
+  >('overview')
   const canSeeVolunteers = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
   const roleLabel = t(`roles.${config.key}`)
@@ -76,6 +80,17 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
               }
             >
               {t('nav.allocations')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('comms')}
+              className={
+                tab === 'comms'
+                  ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                  : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+              }
+            >
+              {t('nav.comms')}
             </button>
             {canSeeFunds && (
               <button
@@ -162,6 +177,11 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                   <ForecastWorkspace />
                 ) : tab === 'allocations' ? (
                   <AllocationQueueWorkspace apiRole={config.apiRole} />
+                ) : tab === 'comms' ? (
+                  <>
+                    <BroadcastPanel />
+                    <DmPanel />
+                  </>
                 ) : tab === 'funds' ? (
                   <FundsReportWorkspace />
                 ) : (
