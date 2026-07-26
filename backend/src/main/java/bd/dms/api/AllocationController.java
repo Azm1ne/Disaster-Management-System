@@ -7,11 +7,14 @@ import bd.dms.allocation.AllocationStatus;
 import bd.dms.allocation.dto.AllocationSummary;
 import bd.dms.forecast.CampResourceObservation;
 import bd.dms.forecast.CampResourceObservationRepository;
+import bd.dms.note.Note;
+import bd.dms.note.dto.NoteView;
 import bd.dms.sim.SimulationEngine;
 import bd.dms.user.AppUser;
 import bd.dms.user.Role;
 import bd.dms.user.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -47,6 +50,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AllocationController {
 
     public record TransitionRequest(@NotNull AllocationStatus toStatus, BigDecimal quantity, String note) {}
+
+    public record NoteRequest(@NotBlank String body) {}
 
     private static final List<String> RESOURCE_TYPES = List.of("WATER", "FOOD", "MEDICAL");
 
@@ -125,6 +130,22 @@ public class AllocationController {
             observations.deleteByCampIdAndResourceTypeAndTickIn(surplusCampId, resourceType, seededTicks);
         }
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/notes")
+    public NoteView addNote(
+            @PathVariable Long id, @Valid @RequestBody NoteRequest request, Authentication authentication) {
+        Note note = allocationService.addNote(actor(authentication), id, request.body());
+        return toNoteView(note);
+    }
+
+    @GetMapping("/{id}/notes")
+    public List<NoteView> notes(@PathVariable Long id, Authentication authentication) {
+        return allocationService.notesFor(actor(authentication), id).stream().map(this::toNoteView).toList();
+    }
+
+    private NoteView toNoteView(Note note) {
+        return new NoteView(note.getAuthorUserId(), note.getBody(), note.getCreatedAt());
     }
 
     private AppUser actor(Authentication authentication) {

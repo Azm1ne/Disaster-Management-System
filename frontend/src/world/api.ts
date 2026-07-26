@@ -55,6 +55,7 @@ export interface CampDetail extends Camp {
 
 /** The signed-in caller, including the camps they manage (empty for roles that manage none). */
 export interface Me {
+  userId: number
   username: string
   role: string
   nameEn: string

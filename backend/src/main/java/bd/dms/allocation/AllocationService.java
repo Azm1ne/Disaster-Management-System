@@ -1,5 +1,8 @@
 package bd.dms.allocation;
 
+import bd.dms.note.Note;
+import bd.dms.note.NoteService;
+import bd.dms.note.NoteSubjectType;
 import bd.dms.sim.SimulationEngine;
 import bd.dms.user.AppUser;
 import bd.dms.user.Role;
@@ -36,18 +39,21 @@ public class AllocationService {
     private final AllocationScoringService scoring;
     private final CampAssignmentRepository assignments;
     private final SimulationEngine engine;
+    private final NoteService notes;
 
     public AllocationService(
             AllocationDecisionRepository allocations,
             AllocationTransitionRepository transitions,
             AllocationScoringService scoring,
             CampAssignmentRepository assignments,
-            SimulationEngine engine) {
+            SimulationEngine engine,
+            NoteService notes) {
         this.allocations = allocations;
         this.transitions = transitions;
         this.scoring = scoring;
         this.assignments = assignments;
         this.engine = engine;
+        this.notes = notes;
     }
 
     @Transactional
@@ -129,6 +135,37 @@ public class AllocationService {
 
     public List<AllocationTransition> transitionsFor(Long allocationId) {
         return transitions.findByAllocationIdOrderByAtTickAsc(allocationId);
+    }
+
+    /** Case notes (ticket 12) attach to the same visibility set as {@link #visibleTo} — a
+     * coordinator/admin can discuss any allocation, a camp manager only one already visible to
+     * them (i.e. approved/modified and targeting their camp). */
+    @Transactional
+    public Note addNote(AppUser actor, Long allocationId, String body) {
+        AllocationDecision decision = allocations.findById(allocationId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown allocation: " + allocationId));
+        if (!isVisible(actor, decision)) {
+            throw new AccessDeniedException("Not entitled to note on this allocation");
+        }
+        return notes.add(NoteSubjectType.ALLOCATION, allocationId, actor.getId(), body);
+    }
+
+    public List<Note> notesFor(AppUser actor, Long allocationId) {
+        AllocationDecision decision = allocations.findById(allocationId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown allocation: " + allocationId));
+        if (!isVisible(actor, decision)) {
+            throw new AccessDeniedException("Not entitled to view this allocation");
+        }
+        return notes.forSubject(NoteSubjectType.ALLOCATION, allocationId);
+    }
+
+    private boolean isVisible(AppUser actor, AllocationDecision decision) {
+        if (isOversight(actor)) {
+            return true;
+        }
+        return actor.getRole() == Role.CAMP_MANAGER
+                && APPROVED_FOR_CAMP_MANAGER.contains(decision.getStatus())
+                && assignments.existsByUserIdAndCampId(actor.getId(), decision.getTargetCampId());
     }
 
     private boolean isOversight(AppUser actor) {

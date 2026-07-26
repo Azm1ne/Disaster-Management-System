@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAllocations, useTransitionAllocation } from '@/allocations/useAllocations'
 import type { AllocationSummary } from '@/allocations/api'
+import { AllocationNoteThread } from '@/comms/AllocationNoteThread'
 
 const STATUS_TONE: Record<AllocationSummary['status'], string> = {
   RECOMMENDED: 'text-ink-muted',
@@ -71,6 +72,7 @@ function AllocationCard({
   const { t, i18n } = useTranslation()
   const resourceLabel = t(`camp.resource.${allocation.resourceType}`)
   const isPending = allocation.status === 'RECOMMENDED'
+  const [notesOpen, setNotesOpen] = useState(false)
 
   return (
     <div className="rounded-lg border border-line bg-surface p-4">
@@ -98,6 +100,15 @@ function AllocationCard({
       <PriorityBreakdown allocation={allocation} />
 
       {allocation.canAct && isPending && <DecisionActions onTransition={onTransition} />}
+
+      <button
+        type="button"
+        onClick={() => setNotesOpen((open) => !open)}
+        className="mt-3 text-xs text-ink-muted underline decoration-line underline-offset-4 hover:text-ink"
+      >
+        {t(notesOpen ? 'comms.notes.hide' : 'comms.notes.show')}
+      </button>
+      {notesOpen && <AllocationNoteThread allocationId={allocation.id} />}
     </div>
   )
 }

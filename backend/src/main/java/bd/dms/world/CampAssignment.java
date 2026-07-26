@@ -9,9 +9,11 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * A user's assignment to a camp they manage. Its sole job in this slice is entitlement: the
- * realtime layer checks it to decide whether a Camp Manager may subscribe to a given camp's
- * topic. A composite (user, camp) key — a user may manage more than one camp.
+ * A user's assignment to a camp — the camp a Camp Manager manages, or the camp a Volunteer works
+ * at. Its job is entitlement: the realtime layer checks it to decide whether a Camp Manager may
+ * subscribe to a given camp's topic, and (ticket 12) {@code DmRelationshipService} checks it to
+ * decide whether a Camp Manager and a Volunteer share a real operational relationship. A
+ * composite (user, camp) key — a user may be assigned to more than one camp.
  */
 @Entity
 @Table(name = "camp_assignments")
