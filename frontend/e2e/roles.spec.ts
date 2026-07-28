@@ -17,9 +17,25 @@ test.describe('every role reaches its own workspace', () => {
       if (shell === 'operator') {
         // The situation-room ribbon, which must always carry the DEMO badge.
         await expect(page.getByText('DEMO').first()).toBeVisible()
+        // The world map — only the operator shell renders one.
+        await expect(page.locator('.leaflet-container').first()).toBeVisible()
       } else {
         await expect(page.getByRole('heading', { name: /Welcome,/ })).toBeVisible()
       }
+
+      // EN<->বাংলা toggle: its own label names the language it would switch TO, so clicking it
+      // and re-reading confirms real strings changed, regardless of which language we started in.
+      const toggle = page.getByRole('button', { name: /Switch language to/i })
+      await expect(toggle).toBeVisible()
+      const beforeLang = await page.locator('html').getAttribute('lang')
+      const beforeLabel = await toggle.textContent()
+
+      await toggle.click()
+
+      await expect(async () => {
+        expect(await page.locator('html').getAttribute('lang')).not.toBe(beforeLang)
+      }).toPass()
+      await expect(toggle).not.toHaveText(beforeLabel ?? '')
     })
   }
 })
