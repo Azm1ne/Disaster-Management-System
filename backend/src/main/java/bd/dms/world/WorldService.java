@@ -81,7 +81,7 @@ public class WorldService {
         List<CampSummary> campViews = disasterCamps.stream().map(this::toCampSummary).toList();
         return new DisasterView(
                 disaster.getId(), disaster.getCode(), disaster.getType(), disaster.getStatus(),
-                disaster.getNameEn(), disaster.getNameBn(), areaViews, campViews);
+                disaster.getNameEn(), disaster.getNameBn(), geometryOf(disaster.getGeometry()), areaViews, campViews);
     }
 
     private CampSummary toCampSummary(Camp camp) {
@@ -110,6 +110,19 @@ public class WorldService {
             // Seed geometry is authored as valid GeoJSON; a parse failure is a seed bug, not a
             // runtime condition to recover from.
             throw new IllegalStateException("Invalid GeoJSON for affected area " + area.getId(), e);
+        }
+    }
+
+    /** A disaster's boundary polygon, or null: unlike an affected area's, it's optional (see
+     * {@link Disaster#getGeometry()}). */
+    private JsonNode geometryOf(String disasterGeometry) {
+        if (disasterGeometry == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(disasterGeometry);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Invalid GeoJSON for disaster boundary", e);
         }
     }
 }
