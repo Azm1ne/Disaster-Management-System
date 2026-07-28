@@ -16,6 +16,7 @@ import { DmPanel } from '@/comms/DmPanel'
 import { FundsReportWorkspace } from '@/funds/FundsReportWorkspace'
 import { VolunteerTaskQueueWorkspace } from '@/volunteers/VolunteerTaskQueueWorkspace'
 import { AdminDisasterWorkspace } from '@/admin/AdminDisasterWorkspace'
+import { CoordinatorProposeWorkspace } from '@/proposals/CoordinatorProposeWorkspace'
 import type { RoleConfig } from '@/roles'
 
 const NAV_SOON = ['camps', 'people'] as const
@@ -30,7 +31,15 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const { user, logout } = useAuth()
   const [simOpen, setSimOpen] = useState(false)
   const [tab, setTab] = useState<
-    'overview' | 'forecasts' | 'allocations' | 'comms' | 'funds' | 'anomalies' | 'volunteers' | 'disasters'
+    | 'overview'
+    | 'forecasts'
+    | 'allocations'
+    | 'comms'
+    | 'funds'
+    | 'anomalies'
+    | 'volunteers'
+    | 'disasters'
+    | 'propose'
   >('overview')
   const canSeeVolunteers = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const personName = (i18n.language === 'bn' ? user?.nameBn : user?.nameEn) ?? ''
@@ -38,6 +47,7 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
   const canSeeFunds = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const canSeeAnomalies = config.apiRole === 'COORDINATOR' || config.apiRole === 'ADMIN'
   const canManageDisasters = config.apiRole === 'ADMIN'
+  const canPropose = config.apiRole === 'COORDINATOR'
 
   return (
     <div data-theme="operator" className="flex min-h-svh flex-col bg-bg text-ink">
@@ -148,6 +158,19 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                 {t('nav.disasters')}
               </button>
             )}
+            {canPropose && (
+              <button
+                type="button"
+                onClick={() => setTab('propose')}
+                className={
+                  tab === 'propose'
+                    ? 'rounded-md bg-surface-2 px-3 py-2 text-left text-sm font-medium text-ink'
+                    : 'rounded-md px-3 py-2 text-left text-sm text-ink-muted hover:text-ink'
+                }
+              >
+                {t('nav.propose')}
+              </button>
+            )}
             <span className="rounded-md px-3 py-2 text-sm text-ink">{t('nav.alerts')}</span>
             {NAV_SOON.map((item) => (
               <span
@@ -218,6 +241,8 @@ export function OperatorShell({ config }: { config: RoleConfig }) {
                   <AnomalyReviewWorkspace />
                 ) : tab === 'disasters' ? (
                   <AdminDisasterWorkspace />
+                ) : tab === 'propose' ? (
+                  <CoordinatorProposeWorkspace />
                 ) : (
                   <VolunteerTaskQueueWorkspace />
                 )}

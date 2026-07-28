@@ -5,9 +5,13 @@ import Login from '@/routes/Login'
 import Locator from '@/routes/Locator'
 import { OperatorShell } from '@/shells/OperatorShell'
 import { FieldShell } from '@/shells/FieldShell'
+import { ProposalInbox } from '@/proposals/ProposalInbox'
 import { ROLES, homePathForRole, type RoleConfig } from '@/roles'
 
 function Workspace({ config }: { config: RoleConfig }) {
+  // The Central Authority never gets a shell — it has exactly one screen, so it bypasses both
+  // the operator and field chrome entirely rather than being awkwardly slotted into either.
+  if (config.apiRole === 'CENTRAL_AUTHORITY') return <ProposalInbox />
   return config.shell === 'operator' ? (
     <OperatorShell config={config} />
   ) : (

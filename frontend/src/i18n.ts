@@ -52,6 +52,7 @@ const resources = {
         anomalies: 'Anomalies',
         volunteers: 'Volunteers',
         disasters: 'Disasters',
+        propose: 'Propose change',
         people: 'People',
         soon: 'Soon',
       },
@@ -74,6 +75,7 @@ const resources = {
         victim: 'Victim / Family',
         ngo: 'NGO Partner',
         admin: 'Administrator',
+        central_authority: 'Central Authority',
       },
 
       roleBlurb: {
@@ -84,6 +86,7 @@ const resources = {
         victim: 'Register your family and check your shelter status under one calm view.',
         ngo: "Coordinate your organization's part of the response.",
         admin: 'Manage the system, its users, and the simulated world.',
+        central_authority: 'Approve or reject proposed changes to the world — nothing else.',
       },
 
       map: {
@@ -452,6 +455,43 @@ const resources = {
         routeSourceOsrm: 'Road route',
         routeSourceStraight: 'Straight-line estimate',
       },
+
+      proposals: {
+        type: {
+          DISASTER_CREATE: 'New disaster',
+          DISASTER_UPDATE: 'Edit disaster',
+          DISASTER_CLOSE: 'Close disaster',
+          AFFECTED_AREA_CREATE: 'New affected area',
+          CAMP_CREATE: 'New camp',
+        },
+        summary: {
+          disasterCreate: 'Create disaster: {{code}}',
+          disasterUpdate: 'Update disaster #{{id}}',
+          disasterClose: 'Close disaster #{{id}}',
+          affectedAreaCreate: 'Add affected area: {{name}}',
+          campCreate: 'Create camp: {{code}} (pop {{population}})',
+        },
+        proposedBy: 'Proposed by user #{{id}}',
+        approve: 'Approve',
+        reject: 'Reject',
+        rejectConfirm: 'Confirm reject',
+        proposeTitle: 'Propose a change',
+        proposeSubtitle: 'Send a disaster, area, or camp change to the central authority for approval.',
+        targetDisaster: 'Disaster',
+        targetDisasterPlaceholder: 'Choose a disaster',
+        submit: 'Submit proposal',
+        submitting: 'Submitting…',
+        submitted: 'Proposal submitted — waiting on the central authority.',
+        error: 'That did not submit. Try again.',
+      },
+
+      centralAuthority: {
+        title: 'Pending proposals',
+        subtitle: 'Approve or reject what coordinators have proposed for the world.',
+        loading: 'Loading proposals…',
+        error: 'Could not load proposals. Check your connection and try again.',
+        empty: 'Nothing pending. New proposals will appear here.',
+      },
     },
   },
   bn: {
@@ -491,6 +531,7 @@ const resources = {
         forecasts: 'পূর্বাভাস',
         allocations: 'বরাদ্দ',
         disasters: 'দুর্যোগ',
+        propose: 'পরিবর্তন প্রস্তাব করুন',
         comms: 'যোগাযোগ',
         funds: 'তহবিল',
         anomalies: 'অসঙ্গতি',
@@ -517,6 +558,7 @@ const resources = {
         victim: 'ভুক্তভোগী / পরিবার',
         ngo: 'এনজিও অংশীদার',
         admin: 'প্রশাসক',
+        central_authority: 'কেন্দ্রীয় কর্তৃপক্ষ',
       },
 
       roleBlurb: {
@@ -527,6 +569,7 @@ const resources = {
         victim: 'একটি শান্ত পর্দায় আপনার পরিবার নিবন্ধন করুন ও আশ্রয়ের অবস্থা দেখুন।',
         ngo: 'সাড়াদানে আপনার সংস্থার অংশ সমন্বয় করুন।',
         admin: 'সিস্টেম, ব্যবহারকারী ও সিমুলেটেড বিশ্ব পরিচালনা করুন।',
+        central_authority: 'বিশ্বের প্রস্তাবিত পরিবর্তনগুলো অনুমোদন বা প্রত্যাখ্যান করুন — আর কিছু নয়।',
       },
 
       map: {
@@ -892,6 +935,43 @@ const resources = {
         routeSummary: '{{km}} কিমি · আনুমানিক {{minutes}} মিনিট',
         routeSourceOsrm: 'সড়ক পথ',
         routeSourceStraight: 'সরল-রেখা আনুমানিক',
+      },
+
+      proposals: {
+        type: {
+          DISASTER_CREATE: 'নতুন দুর্যোগ',
+          DISASTER_UPDATE: 'দুর্যোগ সম্পাদনা',
+          DISASTER_CLOSE: 'দুর্যোগ বন্ধ করুন',
+          AFFECTED_AREA_CREATE: 'নতুন ক্ষতিগ্রস্ত এলাকা',
+          CAMP_CREATE: 'নতুন ক্যাম্প',
+        },
+        summary: {
+          disasterCreate: 'দুর্যোগ তৈরি করুন: {{code}}',
+          disasterUpdate: 'দুর্যোগ #{{id}} হালনাগাদ করুন',
+          disasterClose: 'দুর্যোগ #{{id}} বন্ধ করুন',
+          affectedAreaCreate: 'ক্ষতিগ্রস্ত এলাকা যোগ করুন: {{name}}',
+          campCreate: 'ক্যাম্প তৈরি করুন: {{code}} (জনসংখ্যা {{population}})',
+        },
+        proposedBy: 'ব্যবহারকারী #{{id}} দ্বারা প্রস্তাবিত',
+        approve: 'অনুমোদন করুন',
+        reject: 'প্রত্যাখ্যান করুন',
+        rejectConfirm: 'প্রত্যাখ্যান নিশ্চিত করুন',
+        proposeTitle: 'একটি পরিবর্তন প্রস্তাব করুন',
+        proposeSubtitle: 'অনুমোদনের জন্য কেন্দ্রীয় কর্তৃপক্ষের কাছে একটি দুর্যোগ, এলাকা বা ক্যাম্প পরিবর্তন পাঠান।',
+        targetDisaster: 'দুর্যোগ',
+        targetDisasterPlaceholder: 'একটি দুর্যোগ বেছে নিন',
+        submit: 'প্রস্তাব জমা দিন',
+        submitting: 'জমা হচ্ছে…',
+        submitted: 'প্রস্তাব জমা হয়েছে — কেন্দ্রীয় কর্তৃপক্ষের সিদ্ধান্তের অপেক্ষায়।',
+        error: 'এটি জমা হয়নি। আবার চেষ্টা করুন।',
+      },
+
+      centralAuthority: {
+        title: 'অমীমাংসিত প্রস্তাব',
+        subtitle: 'সমন্বয়কারীরা বিশ্বের জন্য যা প্রস্তাব করেছেন তা অনুমোদন বা প্রত্যাখ্যান করুন।',
+        loading: 'প্রস্তাব লোড হচ্ছে…',
+        error: 'প্রস্তাব লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+        empty: 'অমীমাংসিত কিছু নেই। নতুন প্রস্তাব এখানে দেখা যাবে।',
       },
     },
   },
