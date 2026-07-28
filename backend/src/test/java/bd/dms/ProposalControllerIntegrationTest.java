@@ -9,6 +9,12 @@ import bd.dms.auth.dto.LoginRequest;
 import bd.dms.proposal.ProposalStatus;
 import bd.dms.proposal.ProposalType;
 import bd.dms.proposal.dto.ProposalView;
+import bd.dms.world.AffectedArea;
+import bd.dms.world.AffectedAreaRepository;
+import bd.dms.world.Camp;
+import bd.dms.world.CampRepository;
+import bd.dms.world.CampResource;
+import bd.dms.world.CampResourceRepository;
 import bd.dms.world.Disaster;
 import bd.dms.world.DisasterRepository;
 import bd.dms.world.GeometryHistoryRepository;
@@ -43,6 +49,15 @@ class ProposalControllerIntegrationTest {
 
     @Autowired
     private GeometryHistoryRepository geometryHistory;
+
+    @Autowired
+    private AffectedAreaRepository affectedAreas;
+
+    @Autowired
+    private CampRepository camps;
+
+    @Autowired
+    private CampResourceRepository campResources;
 
     private static final String POLYGON = """
             {"type":"Polygon","coordinates":[[[90.0,24.0],[90.1,24.0],[90.1,24.1],[90.0,24.1],[90.0,24.0]]]}""";
@@ -191,6 +206,142 @@ class ProposalControllerIntegrationTest {
         // Only one disaster was ever created for this code, not two.
         assertThat(disasters.findAll().stream().filter(d -> "prop-flood-idempotency".equals(d.getCode())).count())
                 .isEqualTo(1);
+    }
+
+    private ResponseEntity<ProposalView> propose(Map<String, Object> body, HttpHeaders headers) {
+        return rest.exchange("/proposals", POST, new HttpEntity<>(body, headers), ProposalView.class);
+    }
+
+    private ResponseEntity<ProposalView> approve(Long proposalId, HttpHeaders centralAuthority) {
+        return rest.exchange(
+                "/proposals/" + proposalId + "/approve", POST, new HttpEntity<>(null, centralAuthority), ProposalView.class);
+    }
+
+    private ResponseEntity<String> approveRaw(Long proposalId, HttpHeaders centralAuthority) {
+        return rest.exchange(
+                "/proposals/" + proposalId + "/approve", POST, new HttpEntity<>(null, centralAuthority), String.class);
+    }
+
+    @Test
+    void approvingAnAffectedAreaCreateProposalCreatesTheAreaWithHistory() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+        Long disasterId = disasters.findAll().get(0).getId();
+
+        Map<String, Object> body = Map.of(
+                "proposalType", "AFFECTED_AREA_CREATE",
+                "targetDisasterId", disasterId,
+                "payload", Map.of("nameEn", "Prop Area", "nameBn", "প্রস্তাবিত এলাকা", "geometry", POLYGON));
+        Long proposalId = propose(body, coordinator).getBody().id();
+
+        ResponseEntity<ProposalView> approved = approve(proposalId, centralAuthority);
+        assertThat(approved.getStatusCode().is2xxSuccessful()).isTrue();
+
+        List<AffectedArea> areas = affectedAreas.findByDisasterId(disasterId).stream()
+                .filter(a -> "Prop Area".equals(a.getNameEn()))
+                .toList();
+        assertThat(areas).hasSize(1);
+
+        List<?> history = geometryHistory.findBySubjectTypeAndSubjectIdOrderByCreatedAtAscIdAsc(
+                GeometrySubjectType.AFFECTED_AREA, areas.get(0).getId());
+        assertThat(history).hasSize(1);
+    }
+
+    @Test
+    void approvingACampCreateProposalCreatesTheCampAndSeedsResources() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+        Long disasterId = disasters.findAll().get(0).getId();
+
+        Map<String, Object> body = Map.of(
+                "proposalType", "CAMP_CREATE",
+                "targetDisasterId", disasterId,
+                "payload", Map.of(
+                        "code", "prop-camp-approved", "nameEn", "Approved Camp", "nameBn", "অনুমোদিত ক্যাম্প",
+                        "lat", 24.25, "lng", 90.35, "capacity", 400, "initialPopulation", 80));
+        Long proposalId = propose(body, coordinator).getBody().id();
+
+        ResponseEntity<ProposalView> approved = approve(proposalId, centralAuthority);
+        assertThat(approved.getStatusCode().is2xxSuccessful()).isTrue();
+
+        Camp camp = camps.findByCode("prop-camp-approved").orElseThrow();
+        assertThat(camp.getLat()).isEqualTo(24.25);
+        assertThat(camp.getLng()).isEqualTo(90.35);
+        assertThat(camp.getCapacity()).isEqualTo(400);
+        assertThat(camp.getPopulation()).isEqualTo(80);
+
+        List<CampResource> resources = campResources.findByCampId(camp.getId());
+        assertThat(resources).extracting(CampResource::getResourceType)
+                .containsExactlyInAnyOrder("WATER", "FOOD", "MEDICAL");
+    }
+
+    @Test
+    void approvingADisasterUpdateProposalActuallyChangesTheDisaster() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+        Disaster target = disasters.findAll().get(0);
+        String originalNameBn = target.getNameBn();
+
+        Map<String, Object> body = Map.of(
+                "proposalType", "DISASTER_UPDATE",
+                "targetDisasterId", target.getId(),
+                "payload", Map.of("nameEn", "Renamed Via Proposal"));
+        Long proposalId = propose(body, coordinator).getBody().id();
+
+        ResponseEntity<ProposalView> approved = approve(proposalId, centralAuthority);
+        assertThat(approved.getStatusCode().is2xxSuccessful()).isTrue();
+
+        Disaster reloaded = disasters.findById(target.getId()).orElseThrow();
+        assertThat(reloaded.getNameEn()).isEqualTo("Renamed Via Proposal");
+        assertThat(reloaded.getNameBn()).isEqualTo(originalNameBn);
+    }
+
+    @Test
+    void approvingADisasterCloseProposalActuallyClosesTheDisaster() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+
+        // Propose and approve a create first, so there's a real disaster to close.
+        Long createProposalId = proposeDisasterCreate("prop-flood-to-close", coordinator).getBody().id();
+        approve(createProposalId, centralAuthority);
+        Long targetDisasterId = disasters.findAll().stream()
+                .filter(d -> "prop-flood-to-close".equals(d.getCode()))
+                .findFirst().orElseThrow().getId();
+
+        Map<String, Object> closeBody = Map.of(
+                "proposalType", "DISASTER_CLOSE",
+                "targetDisasterId", targetDisasterId,
+                "payload", Map.of());
+        Long closeProposalId = propose(closeBody, coordinator).getBody().id();
+
+        ResponseEntity<ProposalView> approvedClose = approve(closeProposalId, centralAuthority);
+        assertThat(approvedClose.getStatusCode().is2xxSuccessful()).isTrue();
+
+        Disaster reloaded = disasters.findById(targetDisasterId).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo("CLOSED");
+    }
+
+    @Test
+    void approvingAProposalWithAnInvalidPayloadIsRejectedNotSilentlyPersisted() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+        Long disasterId = disasters.findAll().get(0).getId();
+
+        // Blank nameEn and negative capacity both violate CreateCampRequest's constraints, but
+        // Bean Validation only runs automatically on @Valid @RequestBody, not on a payload
+        // deserialized by hand inside ProposalService — this proves that gap is now closed.
+        Map<String, Object> body = Map.of(
+                "proposalType", "CAMP_CREATE",
+                "targetDisasterId", disasterId,
+                "payload", Map.of(
+                        "code", "prop-camp-invalid", "nameEn", "", "nameBn", "X",
+                        "lat", 24.0, "lng", 90.0, "capacity", -5, "initialPopulation", 0));
+        Long proposalId = propose(body, coordinator).getBody().id();
+
+        ResponseEntity<String> approved = approveRaw(proposalId, centralAuthority);
+        assertThat(approved.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(camps.findByCode("prop-camp-invalid")).isEmpty();
     }
 
     @Test

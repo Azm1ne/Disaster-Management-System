@@ -7,7 +7,11 @@ import bd.dms.api.DisasterAdminController.UpdateDisasterRequest;
 import bd.dms.world.DisasterAdminService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +27,15 @@ public class ProposalService {
     private final DisasterProposalRepository proposals;
     private final DisasterAdminService adminService;
     private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     public ProposalService(
-            DisasterProposalRepository proposals, DisasterAdminService adminService, ObjectMapper objectMapper) {
+            DisasterProposalRepository proposals, DisasterAdminService adminService, ObjectMapper objectMapper,
+            Validator validator) {
         this.proposals = proposals;
         this.adminService = adminService;
         this.objectMapper = objectMapper;
+        this.validator = validator;
     }
 
     /** Files a new proposal. {@code targetDisasterId} must be null for DISASTER_CREATE (no
@@ -114,7 +121,19 @@ public class ProposalService {
         }
     }
 
+    /** Deserializes the payload and runs it through the same Bean Validation constraints
+     * {@code DisasterAdminController}'s {@code @Valid @RequestBody} would enforce on the direct
+     * admin path — {@code ObjectMapper.readValue} alone does not trigger {@code @NotBlank}/
+     * {@code @PositiveOrZero} on the reused request records, so this closes that gap explicitly. */
     private <T> T read(DisasterProposal proposal, Class<T> type) throws JsonProcessingException {
-        return objectMapper.readValue(proposal.getPayload(), type);
+        T request = objectMapper.readValue(proposal.getPayload(), type);
+        Set<ConstraintViolation<T>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new IllegalArgumentException("Invalid proposal payload: " + message);
+        }
+        return request;
     }
 }
