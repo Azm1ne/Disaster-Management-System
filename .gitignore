@@ -3,3 +3,6 @@
 docs/specs/
 .claude/
 CLAUDE.md
+
+# Local k6 load-test run output — see loadtest/README.md
+loadtest/results.json
