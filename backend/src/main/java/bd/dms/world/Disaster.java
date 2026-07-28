@@ -36,6 +36,11 @@ public class Disaster {
     @Column(name = "name_bn", nullable = false)
     private String nameBn;
 
+    /** GeoJSON geometry object as text, the admin-drawn boundary polygon. Nullable: the two
+     * seeded demo disasters (ticket 3) predate manual registration (ticket 13) and have none. */
+    @Column
+    private String geometry;
+
     protected Disaster() {
         // for JPA
     }
@@ -62,5 +67,13 @@ public class Disaster {
 
     public String getNameBn() {
         return nameBn;
+    }
+
+    public String getGeometry() {
+        return geometry;
+    }
+
+    public void setGeometry(String geometry) {
+        this.geometry = geometry;
     }
 }
