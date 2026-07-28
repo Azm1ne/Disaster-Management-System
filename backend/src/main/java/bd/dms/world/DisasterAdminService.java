@@ -137,6 +137,6 @@ public class DisasterAdminService {
     /** A subject's geometry history, oldest first — the audit trail Task 3's controller exposes. */
     @Transactional(readOnly = true)
     public List<GeometryHistory> getGeometryHistory(GeometrySubjectType subjectType, Long subjectId) {
-        return geometryHistory.findBySubjectTypeAndSubjectIdOrderByCreatedAtAsc(subjectType, subjectId);
+        return geometryHistory.findBySubjectTypeAndSubjectIdOrderByCreatedAtAscIdAsc(subjectType, subjectId);
     }
 }

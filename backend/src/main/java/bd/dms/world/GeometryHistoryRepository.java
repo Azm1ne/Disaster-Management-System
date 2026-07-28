@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GeometryHistoryRepository extends JpaRepository<GeometryHistory, Long> {
 
-    List<GeometryHistory> findBySubjectTypeAndSubjectIdOrderByCreatedAtAsc(
+    List<GeometryHistory> findBySubjectTypeAndSubjectIdOrderByCreatedAtAscIdAsc(
             GeometrySubjectType subjectType, Long subjectId);
 }

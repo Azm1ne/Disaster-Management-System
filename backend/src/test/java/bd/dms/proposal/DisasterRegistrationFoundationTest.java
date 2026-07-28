@@ -70,7 +70,7 @@ class DisasterRegistrationFoundationTest {
                 GeometrySubjectType.DISASTER, disaster.getId(), first.getNewGeometry(),
                 "{\"type\":\"Polygon\",\"v\":2}", actor.getId()));
 
-        List<GeometryHistory> history = geometryHistory.findBySubjectTypeAndSubjectIdOrderByCreatedAtAsc(
+        List<GeometryHistory> history = geometryHistory.findBySubjectTypeAndSubjectIdOrderByCreatedAtAscIdAsc(
                 GeometrySubjectType.DISASTER, disaster.getId());
 
         assertThat(history).extracting(GeometryHistory::getId).containsExactly(first.getId(), second.getId());
