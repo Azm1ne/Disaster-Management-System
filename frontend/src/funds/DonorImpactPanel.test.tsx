@@ -16,6 +16,7 @@ const disasters: Disaster[] = [
     status: 'ACTIVE',
     nameEn: 'Jamuna River Flood',
     nameBn: 'যমুনা নদীর বন্যা',
+    geometry: null,
     affectedAreas: [],
     camps: [],
   },

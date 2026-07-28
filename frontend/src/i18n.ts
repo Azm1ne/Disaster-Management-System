@@ -98,6 +98,15 @@ const resources = {
         disasterStatus: { active: 'Active', stable: 'Stable' },
       },
 
+      disasterDraw: {
+        mapLabel: 'Boundary and camp drawing map',
+        polygonMode: 'Drawing boundary',
+        pointMode: 'Placing camp',
+        polygonHint: 'Click to add points. Click the first point again, or double-click, to finish.',
+        pointHint: 'Click the map to place the camp.',
+        cancel: 'Cancel',
+      },
+
       camp: {
         mine: 'Your camp',
         occupancy: 'sheltered',
@@ -483,6 +492,15 @@ const resources = {
         shelteredCount: '{{n}} জন আশ্রিত',
         status: { open: 'খোলা', closed: 'বন্ধ' },
         disasterStatus: { active: 'সক্রিয়', stable: 'স্থিতিশীল' },
+      },
+
+      disasterDraw: {
+        mapLabel: 'সীমানা ও ক্যাম্প আঁকার মানচিত্র',
+        polygonMode: 'সীমানা আঁকা হচ্ছে',
+        pointMode: 'ক্যাম্প বসানো হচ্ছে',
+        polygonHint: 'বিন্দু যোগ করতে ক্লিক করুন। শেষ করতে প্রথম বিন্দুতে আবার ক্লিক করুন, বা ডাবল-ক্লিক করুন।',
+        pointHint: 'ক্যাম্প বসাতে মানচিত্রে ক্লিক করুন।',
+        cancel: 'বাতিল',
       },
 
       camp: {

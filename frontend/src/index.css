@@ -143,3 +143,19 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* leaflet-draw's in-progress drawing feedback (guide line + vertex tooltip), restyled to sit
+ * on the dark situation-room map instead of its stock light-grey look. No stock toolbar is
+ * used (DisasterDrawMap drives drawing imperatively), so only this feedback needs skinning. */
+.leaflet-draw-tooltip {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+.leaflet-draw-tooltip:before {
+  border-right-color: var(--surface);
+}
+.leaflet-draw-guide-dash {
+  background-color: var(--signal);
+}
