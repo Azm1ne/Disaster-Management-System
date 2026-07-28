@@ -483,6 +483,7 @@ const resources = {
         submitting: 'Submitting…',
         submitted: 'Proposal submitted — waiting on the central authority.',
         error: 'That did not submit. Try again.',
+        actionError: 'That did not go through. Try again.',
       },
 
       centralAuthority: {
@@ -964,6 +965,7 @@ const resources = {
         submitting: 'জমা হচ্ছে…',
         submitted: 'প্রস্তাব জমা হয়েছে — কেন্দ্রীয় কর্তৃপক্ষের সিদ্ধান্তের অপেক্ষায়।',
         error: 'এটি জমা হয়নি। আবার চেষ্টা করুন।',
+        actionError: 'এটি সম্পন্ন হয়নি। আবার চেষ্টা করুন।',
       },
 
       centralAuthority: {

@@ -86,10 +86,18 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
   const reject = useRejectProposal()
   const [confirmingReject, setConfirmingReject] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   async function handleApprove() {
     setBusy(true)
-    await approve(proposal.id)
+    setFailed(false)
+    try {
+      await approve(proposal.id)
+    } catch {
+      setFailed(true)
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleReject() {
@@ -98,7 +106,14 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
       return
     }
     setBusy(true)
-    await reject(proposal.id)
+    setFailed(false)
+    try {
+      await reject(proposal.id)
+    } catch {
+      setFailed(true)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -110,6 +125,8 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
       <p className="mt-1 text-xs text-ink-muted">
         {t('proposals.proposedBy', { id: proposal.proposedByUserId })}
       </p>
+
+      {failed && <p className="mt-2 text-sm text-crit">{t('proposals.actionError')}</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
         <button

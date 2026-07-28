@@ -116,3 +116,40 @@ test('reject requires a second confirming click, then calls the reject endpoint 
   expect(fetchPendingProposals).toHaveBeenCalledTimes(2)
   expect(await screen.findByText('Nothing pending. New proposals will appear here.')).toBeInTheDocument()
 })
+
+test('a failed approve shows an error and re-enables the buttons instead of getting stuck', async () => {
+  fetchPendingProposals.mockResolvedValue([disasterCreate])
+  approveProposal.mockRejectedValue(new Error('proposal_approve_failed_409'))
+  const user = userEvent.setup()
+  renderInbox()
+
+  await screen.findByText('Create disaster: new-storm')
+  await user.click(screen.getByText('Approve'))
+
+  expect(await screen.findByText('That did not go through. Try again.')).toBeInTheDocument()
+  const approveButton = screen.getByText('Approve')
+  const rejectButton = screen.getByText('Reject')
+  expect(approveButton).not.toBeDisabled()
+  expect(rejectButton).not.toBeDisabled()
+
+  // Retrying after the failure works — the click handler wasn't left permanently wired to a
+  // stuck `busy` state.
+  approveProposal.mockResolvedValue({ ...disasterCreate, status: 'APPROVED' })
+  await user.click(approveButton)
+  await waitFor(() => expect(approveProposal).toHaveBeenCalledTimes(2))
+})
+
+test('a failed reject shows an error and re-enables the buttons instead of getting stuck', async () => {
+  fetchPendingProposals.mockResolvedValue([disasterCreate])
+  rejectProposal.mockRejectedValue(new Error('proposal_reject_failed_409'))
+  const user = userEvent.setup()
+  renderInbox()
+
+  await screen.findByText('Create disaster: new-storm')
+  await user.click(screen.getByText('Reject'))
+  await user.click(screen.getByText('Confirm reject'))
+
+  expect(await screen.findByText('That did not go through. Try again.')).toBeInTheDocument()
+  expect(screen.getByText('Approve')).not.toBeDisabled()
+  expect(screen.getByText('Confirm reject')).not.toBeDisabled()
+})
