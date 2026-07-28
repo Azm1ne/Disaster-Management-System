@@ -52,6 +52,21 @@ public class Camp {
         // for JPA
     }
 
+    /** Creates a new camp for manual registration (see {@code DisasterAdminService}). Ongoing
+     * mutation after creation stays engine-only (see the mutators below). */
+    public Camp(Long disasterId, String code, String nameEn, String nameBn, double lat, double lng,
+            int capacity, int population, String status) {
+        this.disasterId = disasterId;
+        this.code = code;
+        this.nameEn = nameEn;
+        this.nameBn = nameBn;
+        this.lat = lat;
+        this.lng = lng;
+        this.capacity = capacity;
+        this.population = population;
+        this.status = status;
+    }
+
     public Long getId() {
         return id;
     }

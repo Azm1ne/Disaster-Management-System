@@ -37,6 +37,14 @@ public class AffectedArea {
         // for JPA
     }
 
+    /** Creates a new affected area for manual registration (see {@code DisasterAdminService}). */
+    public AffectedArea(Long disasterId, String nameEn, String nameBn, String geometry) {
+        this.disasterId = disasterId;
+        this.nameEn = nameEn;
+        this.nameBn = nameBn;
+        this.geometry = geometry;
+    }
+
     public Long getId() {
         return id;
     }

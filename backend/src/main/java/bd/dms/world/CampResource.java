@@ -36,6 +36,15 @@ public class CampResource {
         // for JPA
     }
 
+    /** Creates a new resource row bootstrapped at camp creation (see {@code DisasterAdminService}).
+     * Ongoing mutation after that stays engine-only (see {@link #setQuantity}). */
+    public CampResource(Long campId, String resourceType, BigDecimal quantity, String unit) {
+        this.campId = campId;
+        this.resourceType = resourceType;
+        this.quantity = quantity;
+        this.unit = unit;
+    }
+
     public Long getId() {
         return id;
     }
