@@ -69,7 +69,10 @@ public class DisasterProposal {
         this.createdAt = Instant.now();
     }
 
+    /** A proposal is reviewed exactly once — throws if it has already left PENDING, matching
+     * the {@code AnomalyFlag.dispose} idempotency-guard convention. */
     public void approve(Long reviewedByUserId, String reviewNote) {
+        requirePending();
         this.status = ProposalStatus.APPROVED;
         this.reviewedByUserId = reviewedByUserId;
         this.reviewNote = reviewNote;
@@ -77,10 +80,17 @@ public class DisasterProposal {
     }
 
     public void reject(Long reviewedByUserId, String reviewNote) {
+        requirePending();
         this.status = ProposalStatus.REJECTED;
         this.reviewedByUserId = reviewedByUserId;
         this.reviewNote = reviewNote;
         this.reviewedAt = Instant.now();
+    }
+
+    private void requirePending() {
+        if (status != ProposalStatus.PENDING) {
+            throw new IllegalStateException("Proposal " + id + " has already been reviewed");
+        }
     }
 
     public Long getId() {

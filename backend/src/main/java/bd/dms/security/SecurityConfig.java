@@ -55,6 +55,12 @@ public class SecurityConfig {
                         // enforced in FamilyService, mirroring the realtime camp-topic boundary.
                         .requestMatchers("/camp/*/arrivals/**").hasAnyRole("ADMIN", "COORDINATOR", "CAMP_MANAGER")
                         .requestMatchers("/volunteers/**").hasAnyRole("ADMIN", "COORDINATOR", "VOLUNTEER")
+                        // The proposal inbox: a coordinator files a change, a central authority
+                        // reviews it. Neither side can act on the other's step.
+                        .requestMatchers(HttpMethod.POST, "/proposals").hasRole("COORDINATOR")
+                        .requestMatchers(HttpMethod.GET, "/proposals", "/proposals/**").hasRole("CENTRAL_AUTHORITY")
+                        .requestMatchers(HttpMethod.POST, "/proposals/*/approve", "/proposals/*/reject")
+                                .hasRole("CENTRAL_AUTHORITY")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         // Unauthenticated -> 401; authenticated-but-forbidden -> 403.
