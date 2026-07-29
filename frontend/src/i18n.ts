@@ -493,6 +493,22 @@ const resources = {
         error: 'Could not load proposals. Check your connection and try again.',
         empty: 'Nothing pending. New proposals will appear here.',
       },
+
+      ngo: {
+        engagement: {
+          title: 'Your disaster engagement',
+          subtitle: 'The operations your organization is contributing into — no detail beyond the name and a camp count.',
+          loading: 'Loading…',
+          error: 'Could not load disasters. Check your connection and try again.',
+          empty: 'No disasters are active right now.',
+          campsCount: '{{count}} camps',
+        },
+        report: {
+          title: 'Unaccounted funds',
+          subtitle: 'Money in versus aid out, per disaster — read-only transparency on the pipeline your contribution flows through.',
+          loading: 'Loading the unaccounted-funds report…',
+        },
+      },
     },
   },
   bn: {
@@ -974,6 +990,22 @@ const resources = {
         loading: 'প্রস্তাব লোড হচ্ছে…',
         error: 'প্রস্তাব লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
         empty: 'অমীমাংসিত কিছু নেই। নতুন প্রস্তাব এখানে দেখা যাবে।',
+      },
+
+      ngo: {
+        engagement: {
+          title: 'আপনার দুর্যোগ সম্পৃক্ততা',
+          subtitle: 'আপনার সংস্থা যে অপারেশনগুলোতে অবদান রাখছে — নাম ও ক্যাম্প সংখ্যার বাইরে কোনো বিস্তারিত নেই।',
+          loading: 'লোড হচ্ছে…',
+          error: 'দুর্যোগ লোড করা যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
+          empty: 'এই মুহূর্তে কোনো দুর্যোগ সক্রিয় নেই।',
+          campsCount: '{{count}}টি ক্যাম্প',
+        },
+        report: {
+          title: 'অনিয়ন্ত্রিত তহবিল',
+          subtitle: 'প্রতিটি দুর্যোগে আয় বনাম ব্যয় — আপনার অবদান যে পাইপলাইনে প্রবাহিত হয় তার পড়ুন-অনলি স্বচ্ছতা।',
+          loading: 'অনিয়ন্ত্রিত তহবিল প্রতিবেদন লোড হচ্ছে…',
+        },
       },
     },
   },
