@@ -9,9 +9,12 @@ import bd.dms.sim.SimulationEngine;
 import bd.dms.world.Camp;
 import bd.dms.world.CampRepository;
 import java.lang.reflect.Type;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +25,8 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -37,8 +42,10 @@ class StompTopicAuthIntegrationTest {
 
     private static final String DEMO_PASSWORD = "relief2026";
     /** Long enough for a legitimate frame to arrive; a refused subscription never produces one. */
-    private static final long RECEIVE_TIMEOUT_SECONDS = 5;
+    private static final long RECEIVE_TIMEOUT_SECONDS = 15;
     private static final long REFUSAL_TIMEOUT_SECONDS = 2;
+    /** Required by the STOMP client to track SUBSCRIBE receipts (see subscribe() below). */
+    private static final TaskScheduler RECEIPT_SCHEDULER = new ConcurrentTaskScheduler();
 
     @LocalServerPort
     private int port;
@@ -51,6 +58,14 @@ class StompTopicAuthIntegrationTest {
 
     @Autowired
     private CampRepository camps;
+
+    @BeforeEach
+    void resetEngine() {
+        // SimulationEngine is a singleton bean shared with every other @SpringBootTest that
+        // reuses this context; without resetting, a prior test can leave tick at Scenario.LENGTH,
+        // making advance() a no-op that never publishes a WorldChangedEvent for this test to see.
+        engine.reset();
+    }
 
     @Test
     void coordinatorReceivesWorldUpdatesAsTheSimulationTicks() throws Exception {
@@ -127,6 +142,7 @@ class StompTopicAuthIntegrationTest {
     private StompSession connect(String token) throws Exception {
         WebSocketStompClient client = new WebSocketStompClient(new StandardWebSocketClient());
         client.setMessageConverter(new MappingJackson2MessageConverter());
+        client.setTaskScheduler(RECEIPT_SCHEDULER);
         StompHeaders connectHeaders = new StompHeaders();
         if (token != null) {
             connectHeaders.add("Authorization", "Bearer " + token);
@@ -142,19 +158,26 @@ class StompTopicAuthIntegrationTest {
     private BlockingQueue<Object> subscribe(StompSession session, String destination)
             throws InterruptedException {
         BlockingQueue<Object> frames = new LinkedBlockingQueue<>();
-        session.subscribe(destination, new StompFrameHandler() {
-            @Override
-            public Type getPayloadType(StompHeaders headers) {
-                return Object.class;
-            }
+        StompHeaders headers = new StompHeaders();
+        headers.setDestination(destination);
+        headers.setReceipt(UUID.randomUUID().toString());
+        CountDownLatch subscribed = new CountDownLatch(1);
+        StompSession.Subscription subscription =
+                session.subscribe(headers, new StompFrameHandler() {
+                    @Override
+                    public Type getPayloadType(StompHeaders headers) {
+                        return Object.class;
+                    }
 
-            @Override
-            public void handleFrame(StompHeaders headers, Object payload) {
-                frames.add(payload);
-            }
-        });
-        // SUBSCRIBE is fire-and-forget; let it reach the broker before the world is changed.
-        Thread.sleep(500);
+                    @Override
+                    public void handleFrame(StompHeaders headers, Object payload) {
+                        frames.add(payload);
+                    }
+                });
+        // Wait for the broker's RECEIPT rather than a fixed sleep, so a slow/loaded runner can't
+        // race engine.advance() ahead of the SUBSCRIBE actually registering at the broker.
+        subscription.addReceiptTask(subscribed::countDown);
+        subscribed.await(RECEIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         return frames;
     }
 
