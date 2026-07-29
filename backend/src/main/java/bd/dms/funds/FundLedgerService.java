@@ -190,11 +190,16 @@ public class FundLedgerService {
     }
 
     /** The unaccounted-funds report: every disaster's money-in vs. aid-out (via procurement),
-     * and the gap between them. Coordinator/Admin only. */
+     * and the gap between them. Coordinator/Admin drive it as a write-side auditing tool; NGO
+     * partners get the same read-only shape so they can see where the operations they're
+     * contributing into are landing the resources — no write capability here, that's the
+     * {@code funds.procure} boundary, which stays Coordinator/Admin. */
     @Transactional(readOnly = true)
     public FundsReport report(AppUser actor) {
-        if (actor.getRole() != Role.COORDINATOR && actor.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("Only Coordinator/Admin can view the funds report");
+        if (actor.getRole() != Role.COORDINATOR
+                && actor.getRole() != Role.ADMIN
+                && actor.getRole() != Role.NGO) {
+            throw new AccessDeniedException("Only Coordinator/Admin/NGO can view the funds report");
         }
         List<DisasterFundSummary> lines = disasters.findAll().stream()
                 .map(d -> {
