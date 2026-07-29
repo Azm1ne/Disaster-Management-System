@@ -3,8 +3,10 @@ import { expect, type Page } from '@playwright/test'
 /** The shared password for every seeded demo account (see README). */
 export const DEMO_PASSWORD = 'relief2026'
 
-/** Each seeded role, the label its workspace shows, and where it should land. */
-export const ROLE_LABELS: Record<string, { label: string; shell: 'operator' | 'field'; path: string }> =
+/** Each seeded role, the label its workspace shows, and where it should land. `bare` is the
+ * Central Authority's shell-less approval inbox — no operator chrome, no field-shell "Welcome,"
+ * heading, just the queue (see `roles.ts` and `proposals/ProposalInbox.tsx`). */
+export const ROLE_LABELS: Record<string, { label: string; shell: 'operator' | 'field' | 'bare'; path: string }> =
   {
     coordinator: { label: 'Relief Coordinator', shell: 'operator', path: '/coordinator' },
     camp_manager: { label: 'Camp Manager', shell: 'operator', path: '/camp' },
@@ -13,6 +15,7 @@ export const ROLE_LABELS: Record<string, { label: string; shell: 'operator' | 'f
     volunteer: { label: 'Volunteer', shell: 'field', path: '/volunteer' },
     victim: { label: 'Victim', shell: 'field', path: '/victim' },
     ngo: { label: 'NGO', shell: 'field', path: '/ngo' },
+    central_authority: { label: 'Central Authority', shell: 'bare', path: '/central-authority' },
   }
 
 /** Signs in through the real form and waits until the role's workspace has rendered. */

@@ -21,6 +21,9 @@ export const ROLES: RoleConfig[] = [
   { apiRole: 'VOLUNTEER', key: 'volunteer', path: '/volunteer', shell: 'field' },
   { apiRole: 'VICTIM', key: 'victim', path: '/victim', shell: 'field' },
   { apiRole: 'NGO', key: 'ngo', path: '/ngo', shell: 'field' },
+  // Shell value is unused for this role — `Workspace` special-cases CENTRAL_AUTHORITY to render
+  // the standalone `ProposalInbox` directly, bypassing both shells entirely.
+  { apiRole: 'CENTRAL_AUTHORITY', key: 'central_authority', path: '/central-authority', shell: 'field' },
 ]
 
 export function configForApiRole(apiRole: string | undefined): RoleConfig | undefined {

@@ -1,9 +1,9 @@
 # Architecture
 
 A showcase disaster-management system for two concurrent Bangladesh disasters (a Jamuna flood and
-a Patuakhali cyclone), covering seven operational roles end to end: relief coordination, camp
-management, allocation, forecasting, anomaly detection, volunteer matching, a donation ledger, and
-victim/family reunification.
+a Patuakhali cyclone), covering eight operational roles end to end: relief coordination, camp
+management, allocation, forecasting, anomaly detection, volunteer matching, a donation ledger,
+victim/family reunification, and central-authority approval of manually-proposed world changes.
 
 ## System shape
 
@@ -12,6 +12,7 @@ flowchart LR
     subgraph Client[Frontend — React + TypeScript]
         OperatorShell["OperatorShell\n(Coordinator / Camp Manager / Admin)"]
         FieldShell["FieldShell\n(Donor / Volunteer / Victim / NGO)"]
+        ProposalInbox["ProposalInbox\n(Central Authority, bare)"]
         Locator["Public Locator\n(no account)"]
     end
 
@@ -26,6 +27,7 @@ flowchart LR
 
     OperatorShell -->|HTTP| REST
     FieldShell -->|HTTP| REST
+    ProposalInbox -->|HTTP| REST
     Locator -->|HTTP, public read| REST
     OperatorShell <-->|subscribe| STOMP
     FieldShell <-->|subscribe| STOMP
@@ -44,7 +46,7 @@ order (see `docs/README.md` and the ticket history in git log for the exact sequ
 
 | Package | Responsibility |
 |---|---|
-| `auth`, `security`, `user` | JWT auth, the seven `Role`s, role-routed authorization |
+| `auth`, `security`, `user` | JWT auth, the eight `Role`s, role-routed authorization |
 | `world` | Disasters, affected areas, camps — the read model of the simulated world |
 | `sim` | `Scenario` (deterministic scripted world) + `SimulationEngine`, the **sole writer** of `camps`/`camp_resources` |
 | `realtime` | STOMP topic wiring; topic names double as the access-control unit |
@@ -64,11 +66,13 @@ order (see `docs/README.md` and the ticket history in git log for the exact sequ
 ## Frontend module map
 
 `frontend/src/` mirrors the backend slices: one directory per feature (`world`, `family`,
-`alerts`, `forecasts`, `allocations`, `volunteers`, `funds`, `anomalies`, `comms`), each holding an
-API client, a data hook, and a workspace component. Two shells route by role:
+`alerts`, `forecasts`, `allocations`, `volunteers`, `funds`, `anomalies`, `comms`, `proposals`),
+each holding an API client, a data hook, and a workspace component. Two shells route by role:
 `shells/OperatorShell.tsx` (dark, dense, map-first — Coordinator/Camp Manager/Admin) and
 `shells/FieldShell.tsx` (light, large-type, mobile-first — Donor/Volunteer/Victim/NGO).
-`routes/Locator.tsx` is the one public, unauthenticated surface.
+`proposals/ProposalInbox.tsx` is a third, bare route for Central Authority — not built on either
+shell (see `docs/responsible-design-note.md`). `routes/Locator.tsx` is the one public,
+unauthenticated surface.
 
 ## The three test seams
 

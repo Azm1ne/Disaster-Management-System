@@ -8,10 +8,13 @@ import bd.dms.auth.dto.LoginRequest;
 import bd.dms.sim.SimulationEngine;
 import bd.dms.world.Camp;
 import bd.dms.world.CampRepository;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.lang.reflect.Type;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,8 +40,17 @@ class StompTopicAuthIntegrationTest {
 
     private static final String DEMO_PASSWORD = "relief2026";
     /** Long enough for a legitimate frame to arrive; a refused subscription never produces one. */
-    private static final long RECEIVE_TIMEOUT_SECONDS = 5;
-    private static final long REFUSAL_TIMEOUT_SECONDS = 2;
+    private static final long RECEIVE_TIMEOUT_SECONDS = 10;
+    /** Long enough for the server's ERROR-and-close answer to a subscription it refuses. */
+    private static final long REFUSAL_TIMEOUT_SECONDS = 5;
+    /**
+     * The JSR-356 client container defaults to an 8 KB text buffer and refuses partial messages, so
+     * anything larger closes the socket with 1009 ("message too big") before the frame is handed to
+     * the session — and {@code /topic/world} carries the whole world, which grows with the number of
+     * disasters on record. A browser negotiates no such limit, so this is purely a harness artifact;
+     * without it the test silently starts measuring payload size instead of access control.
+     */
+    private static final int CLIENT_TEXT_BUFFER_BYTES = 1024 * 1024;
 
     @LocalServerPort
     private int port;
@@ -52,14 +64,20 @@ class StompTopicAuthIntegrationTest {
     @Autowired
     private CampRepository camps;
 
+    @BeforeEach
+    void resetEngine() {
+        // SimulationEngine is a singleton bean shared with every other @SpringBootTest that
+        // reuses this context; without resetting, a prior test can leave tick at Scenario.LENGTH,
+        // making advance() a no-op that never publishes a WorldChangedEvent for this test to see.
+        engine.reset();
+    }
+
     @Test
     void coordinatorReceivesWorldUpdatesAsTheSimulationTicks() throws Exception {
         StompSession session = connect(tokenFor("coordinator"));
         BlockingQueue<Object> frames = subscribe(session, "/topic/world");
 
-        engine.advance();
-
-        assertThat(frames.poll(RECEIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+        assertThat(awaitFrame(frames, engine::advance))
                 .as("an entitled subscriber receives the world")
                 .isNotNull();
     }
@@ -69,9 +87,7 @@ class StompTopicAuthIntegrationTest {
         StompSession session = connect(tokenFor("victim"));
         BlockingQueue<Object> frames = subscribe(session, "/topic/simulation");
 
-        engine.pause();
-
-        assertThat(frames.poll(RECEIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+        assertThat(awaitFrame(frames, engine::pause))
                 .as("the DEMO clock is shared with every signed-in role")
                 .isNotNull();
     }
@@ -81,9 +97,7 @@ class StompTopicAuthIntegrationTest {
         StompSession session = connect(tokenFor("camp_manager"));
         BlockingQueue<Object> frames = subscribe(session, campTopic("jam-kurigram-sadar"));
 
-        engine.advance();
-
-        assertThat(frames.poll(RECEIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+        assertThat(awaitFrame(frames, engine::advance))
                 .as("a manager receives the camp they are assigned to")
                 .isNotNull();
     }
@@ -93,11 +107,12 @@ class StompTopicAuthIntegrationTest {
         StompSession session = connect(tokenFor("camp_manager"));
         BlockingQueue<Object> frames = subscribe(session, campTopic("jam-chilmari"));
 
+        awaitRefusal(session);
         engine.advance();
 
-        assertThat(frames.poll(REFUSAL_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+        assertThat(frames)
                 .as("a manager gets nothing for a camp that is not theirs")
-                .isNull();
+                .isEmpty();
     }
 
     @Test
@@ -105,11 +120,12 @@ class StompTopicAuthIntegrationTest {
         StompSession session = connect(tokenFor("donor"));
         BlockingQueue<Object> frames = subscribe(session, campTopic("jam-kurigram-sadar"));
 
+        awaitRefusal(session);
         engine.advance();
 
-        assertThat(frames.poll(REFUSAL_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+        assertThat(frames)
                 .as("camp detail never reaches a role outside the operation")
-                .isNull();
+                .isEmpty();
     }
 
     @Test
@@ -125,8 +141,11 @@ class StompTopicAuthIntegrationTest {
     }
 
     private StompSession connect(String token) throws Exception {
-        WebSocketStompClient client = new WebSocketStompClient(new StandardWebSocketClient());
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        container.setDefaultMaxTextMessageBufferSize(CLIENT_TEXT_BUFFER_BYTES);
+        WebSocketStompClient client = new WebSocketStompClient(new StandardWebSocketClient(container));
         client.setMessageConverter(new MappingJackson2MessageConverter());
+        client.setInboundMessageSizeLimit(CLIENT_TEXT_BUFFER_BYTES);
         StompHeaders connectHeaders = new StompHeaders();
         if (token != null) {
             connectHeaders.add("Authorization", "Bearer " + token);
@@ -139,8 +158,7 @@ class StompTopicAuthIntegrationTest {
                 .get(RECEIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
-    private BlockingQueue<Object> subscribe(StompSession session, String destination)
-            throws InterruptedException {
+    private BlockingQueue<Object> subscribe(StompSession session, String destination) {
         BlockingQueue<Object> frames = new LinkedBlockingQueue<>();
         session.subscribe(destination, new StompFrameHandler() {
             @Override
@@ -153,9 +171,40 @@ class StompTopicAuthIntegrationTest {
                 frames.add(payload);
             }
         });
-        // SUBSCRIBE is fire-and-forget; let it reach the broker before the world is changed.
-        Thread.sleep(500);
         return frames;
+    }
+
+    /**
+     * SUBSCRIBE is fire-and-forget and the simple broker answers no RECEIPT, so a client has no way
+     * to observe the moment its subscription registers. Re-trigger rather than sleep: a broadcast
+     * that lands before the SUBSCRIBE reaches the broker is simply followed by another one.
+     */
+    private Object awaitFrame(BlockingQueue<Object> frames, Runnable trigger) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(RECEIVE_TIMEOUT_SECONDS);
+        while (System.nanoTime() < deadline) {
+            trigger.run();
+            Object frame = frames.poll(500, TimeUnit.MILLISECONDS);
+            if (frame != null) {
+                return frame;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A refused SUBSCRIBE is answered with an ERROR frame and the server drops the session. That
+     * close is the only proof the broker actually processed the frame, so wait for it: without it,
+     * a subscription that simply had not registered yet is indistinguishable from a refused one,
+     * and the two "receives nothing" tests would pass for the wrong reason.
+     */
+    private void awaitRefusal(StompSession session) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(REFUSAL_TIMEOUT_SECONDS);
+        while (session.isConnected() && System.nanoTime() < deadline) {
+            Thread.sleep(50);
+        }
+        assertThat(session.isConnected())
+                .as("the transport itself refuses the subscription and closes the session")
+                .isFalse();
     }
 
     private String tokenFor(String username) {

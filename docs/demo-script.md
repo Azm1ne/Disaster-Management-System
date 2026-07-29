@@ -47,41 +47,50 @@ Sign in as `admin` → `/admin`. Draws a disaster's area as a map polygon, click
 areas and camps, and can edit or close a disaster. Every geometry change is retained as audit
 history (ticket 13).
 
-## 4. Victim — registration and reunification
+## 4. Coordinator proposes, Central Authority approves
+
+Sign in as `coordinator` again and propose a camp (same form as Admin's, routed through
+`/proposals` instead of `/admin/disasters/**`). Sign out, sign in as `central_authority` → lands
+on `/central-authority`, a bare approval inbox with no map and no DEMO badge. The proposed camp
+shows up in the queue; approve it and confirm it now appears on the Coordinator's world map —
+the same `DisasterAdminService` write path Admin uses directly, just gated behind a second
+approver.
+
+## 5. Victim — registration and reunification
 
 Sign in as `victim` → `/victim`, the light, large-type field shell. Register a family group,
 confirm a dual-source arrival, and search for a reunification match — note that the search result
 never exposes another family's full roster, only a match confirmation.
 
-## 5. Volunteer — task queue
+## 6. Volunteer — task queue
 
 Sign in as `volunteer` → `/volunteer`. See a push-assigned task from the scoring/routing system,
 self-accept an open one, and check the skill-gap indicator when a task needs a skill the
 volunteer doesn't have. The volunteer's shell also carries the broadcast/DM panels, since a
 volunteer is a genuine Camp-Manager operational relationship.
 
-## 6. Donor — impact, not access
+## 7. Donor — impact, not access
 
 Sign in as `donor` → `/donor`. Make a donation, then see it reflected in the donor impact view —
 read-only transparency into where funds went, with no operational chat surface (see
 `docs/responsible-design-note.md` for why).
 
-## 7. NGO — read-only workspace
+## 8. NGO — read-only workspace
 
 Sign in as `ngo` → `/ngo` (ticket 15; a placeholder shell until that ticket lands).
 
-## 8. The public locator — no account needed
+## 9. The public locator — no account needed
 
 Visit `/locator` with no sign-in. Confirm it never shows camp capacity or any operational detail —
 it's the one place camp data is shown to nobody in particular, deliberately kept to "is there a
 shelter near me."
 
-## 9. The language toggle
+## 10. The language toggle
 
 On any screen, click the EN↔বাংলা toggle in the header and confirm every visible string switches —
 English-only text anywhere in this system is treated as a bug, not a missing translation.
 
-## 10. The receipts
+## 11. The receipts
 
 Everything demoed above is also measured, not just shown: run
 `./gradlew test --tests "bd.dms.anomaly.MetricsReportGeneratorTest"` from `backend/` and open

@@ -70,6 +70,14 @@ test('a signed-in user lands on their own role workspace', () => {
   expect(screen.getByText('world-workspace')).toBeInTheDocument()
 })
 
+test('a coordinator cannot reach the central-authority inbox route', () => {
+  // ProtectedRoute's role check is generic (already covered above); this just confirms the new
+  // CENTRAL_AUTHORITY route is wired into that same guard, not exempted from it.
+  seedSession('COORDINATOR', 'Rehana Karim')
+  renderAt('/central-authority')
+  expect(screen.getAllByText('DEMO').length).toBeGreaterThan(0)
+})
+
 test('a user is kept out of another role’s route', () => {
   // A coordinator navigating to the donor route is redirected home to the operator shell,
   // not shown the donor (field) workspace.

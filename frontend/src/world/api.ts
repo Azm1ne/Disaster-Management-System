@@ -36,6 +36,8 @@ export interface Disaster {
   status: string
   nameEn: string
   nameBn: string
+  /** The admin-drawn boundary polygon, null until one is registered (ticket 13). */
+  geometry: GeoJsonPolygon | null
   affectedAreas: AffectedArea[]
   camps: Camp[]
 }

@@ -41,6 +41,8 @@ public class DemoUserSeeder implements CommandLineRunner {
         seed("victim", Role.VICTIM, "Jesmin Begum", "জেসমিন বেগম");
         seed("ngo", Role.NGO, "BRAC Relief Desk", "ব্র্যাক ত্রাণ ডেস্ক");
         seed("admin", Role.ADMIN, "System Administrator", "সিস্টেম অ্যাডমিনিস্ট্রেটর");
+        seed("central_authority", Role.CENTRAL_AUTHORITY,
+                "National Disaster Response Authority", "জাতীয় দুর্যোগ সাড়া কর্তৃপক্ষ");
     }
 
     private void seed(String username, Role role, String nameEn, String nameBn) {
