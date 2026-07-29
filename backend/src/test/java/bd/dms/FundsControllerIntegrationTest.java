@@ -169,6 +169,44 @@ class FundsControllerIntegrationTest {
     }
 
     @Test
+    void ngoCanReadTheUnaccountedFundsReport() {
+        // The NGO partner gets the same read-only shape as Coordinator/Admin — see ticket 15 and
+        // docs/responsible-design-note.md for the "NGO read-only transparency, no write" rule.
+        Disaster disaster = aDisaster();
+        HttpHeaders donorHeaders = authHeaders("donor");
+        HttpHeaders ngoHeaders = authHeaders("ngo");
+
+        rest.exchange(
+                "/funds/donations", POST,
+                new HttpEntity<>(Map.of("disasterId", disaster.getId(), "amount", 300), donorHeaders), DonationView.class);
+
+        ResponseEntity<FundsReport> response = rest.exchange(
+                "/funds/report", GET, new HttpEntity<>(ngoHeaders), FundsReport.class);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().disasters())
+                .anySatisfy(d -> assertThat(d.disasterId()).isEqualTo(disaster.getId()));
+    }
+
+    @Test
+    void ngoIsStillForbiddenOnProcure() {
+        // Extending the report-role check to NGO must NOT widen the write-side role boundary —
+        // procurement stays Coordinator/Admin only. The NGO view is read-only by design.
+        Disaster disaster = aDisaster();
+        Camp camp = aCampIn(disaster);
+        HttpHeaders ngoHeaders = authHeaders("ngo");
+
+        ResponseEntity<String> response = rest.exchange(
+                "/funds/procurements", POST,
+                new HttpEntity<>(
+                        Map.of("disasterId", disaster.getId(), "campId", camp.getId(), "resourceType", "WATER", "amount", 10),
+                        ngoHeaders),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void coordinatorCanReadTheUnaccountedFundsReport() {
         Disaster disaster = aDisaster();
         HttpHeaders donorHeaders = authHeaders("donor");

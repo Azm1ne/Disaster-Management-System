@@ -6,12 +6,14 @@ import { BroadcastPanel } from '@/comms/BroadcastPanel'
 import { DmPanel } from '@/comms/DmPanel'
 import { DonorImpactPanel } from '@/funds/DonorImpactPanel'
 import { VolunteerFieldPanel } from '@/volunteers/VolunteerFieldPanel'
+import { NgoWorkspacePanel } from '@/ngo/NgoWorkspacePanel'
 import type { RoleConfig } from '@/roles'
 
 /**
  * The calm, large-type, mobile-first shell for people in the field and the public (Victim,
  * Volunteer, Donor, NGO). Light theme, generous spacing, a single clear next step — designed
- * to be usable on a phone, under stress. Placeholder content in this slice.
+ * to be usable on a phone, under stress. Each role keeps its own scoped content; the NGO
+ * partner's read-only transparency view lives here (ticket 15).
  */
 export function FieldShell({ config }: { config: RoleConfig }) {
   const { t, i18n } = useTranslation()
@@ -61,6 +63,8 @@ export function FieldShell({ config }: { config: RoleConfig }) {
               <DmPanel />
             </div>
           </>
+        ) : config.apiRole === 'NGO' ? (
+          <NgoWorkspacePanel />
         ) : (
           <div className="mt-8 rounded-2xl border border-line bg-surface p-6 sm:p-8">
             <h2 className="text-xl font-semibold">{t('shell.placeholderTitle')}</h2>

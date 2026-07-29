@@ -75,9 +75,13 @@ Sign in as `donor` → `/donor`. Make a donation, then see it reflected in the d
 read-only transparency into where funds went, with no operational chat surface (see
 `docs/responsible-design-note.md` for why).
 
-## 8. NGO — read-only workspace
+## 7. NGO — read-only transparency
 
-Sign in as `ngo` → `/ngo` (ticket 15; a placeholder shell until that ticket lands).
+Sign in as `ngo` → `/ngo`. The NGO partner sees a read-only transparency view: their
+contributing disasters listed by name and camp count, plus the unaccounted-funds report (money
+in vs. aid out per disaster). There is no chat, no procurement, and no proposal surface by
+design (see `docs/responsible-design-note.md` and `docs/comms-scope.md` — NGO chat is
+deliberately excluded as a scope decision).
 
 ## 9. The public locator — no account needed
 
