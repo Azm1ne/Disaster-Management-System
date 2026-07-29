@@ -180,6 +180,72 @@ class DisasterAdminControllerIntegrationTest {
     }
 
     @Test
+    void closedDisasterRejectsUpdateAffectedAreaAndCampCreationWithBadRequest() {
+        HttpHeaders admin = authHeaders("admin");
+        DisasterAdminView disaster = createDisaster("adm-flood-closed", admin).getBody();
+
+        ResponseEntity<DisasterAdminView> closed = rest.exchange(
+                "/admin/disasters/" + disaster.id() + "/close", POST,
+                new HttpEntity<>(null, admin), DisasterAdminView.class);
+        assertThat(closed.getBody().status()).isEqualTo("CLOSED");
+
+        assertThat(rest.exchange(
+                        "/admin/disasters/" + disaster.id(), PUT,
+                        new HttpEntity<>(Map.of("nameEn", "X"), admin), String.class)
+                .getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(rest.exchange(
+                        "/admin/disasters/" + disaster.id() + "/affected-areas", POST,
+                        new HttpEntity<>(Map.of("nameEn", "A", "nameBn", "A", "geometry", POLYGON), admin),
+                        String.class)
+                .getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(rest.exchange(
+                        "/admin/disasters/" + disaster.id() + "/camps", POST,
+                        new HttpEntity<>(Map.of(
+                                "code", "adm-camp-closed", "nameEn", "A", "nameBn", "A",
+                                "lat", 1.0, "lng", 1.0, "capacity", 10, "initialPopulation", 0), admin),
+                        String.class)
+                .getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void duplicateDisasterCodeIsBadRequestNotServerError() {
+        HttpHeaders admin = authHeaders("admin");
+        createDisaster("adm-flood-dup", admin);
+
+        ResponseEntity<String> response = rest.exchange(
+                "/admin/disasters", POST,
+                new HttpEntity<>(Map.of(
+                        "code", "adm-flood-dup", "type", "FLOOD", "nameEn", "Test Flood",
+                        "nameBn", "টেস্ট বন্যা", "geometry", POLYGON), admin),
+                String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void duplicateCampCodeIsBadRequestNotServerError() {
+        HttpHeaders admin = authHeaders("admin");
+        Long disasterId = createDisaster("adm-flood-camp-dup", admin).getBody().id();
+
+        Map<String, Object> campBody = Map.of(
+                "code", "adm-camp-dup", "nameEn", "New Camp", "nameBn", "নতুন ক্যাম্প",
+                "lat", 24.05, "lng", 90.05, "capacity", 500, "initialPopulation", 100);
+        ResponseEntity<CampAdminView> first = rest.exchange(
+                "/admin/disasters/" + disasterId + "/camps", POST,
+                new HttpEntity<>(campBody, admin), CampAdminView.class);
+        assertThat(first.getStatusCode().is2xxSuccessful()).isTrue();
+
+        ResponseEntity<String> second = rest.exchange(
+                "/admin/disasters/" + disasterId + "/camps", POST,
+                new HttpEntity<>(campBody, admin), String.class);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void nonAdminIsForbiddenOnEveryEndpoint() {
         HttpHeaders admin = authHeaders("admin");
         DisasterAdminView disaster = createDisaster("adm-flood-4", admin).getBody();

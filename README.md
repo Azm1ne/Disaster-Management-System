@@ -40,6 +40,7 @@ them share the same password. On the login screen you can tap a role to fill the
 | Volunteer         | `volunteer`    | Field view (light, large-type, mobile)   | `relief2026` |
 | Victim / Family   | `victim`       | Field view (light, large-type, mobile)   | `relief2026` |
 | NGO Partner       | `ngo`          | Field view (light, large-type, mobile)   | `relief2026` |
+| Central Authority | `central_authority` | Approval inbox (minimal, no map)   | `relief2026` |
 
 The password and JWT signing secret are configurable via `DMS_DEMO_PASSWORD`, `DMS_JWT_SECRET`,
 `DMS_JWT_ACCESS_TTL`, and `DMS_JWT_REFRESH_TTL` (see `backend/src/main/resources/application.yml`).

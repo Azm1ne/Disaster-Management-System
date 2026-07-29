@@ -4,7 +4,7 @@ import { ROLE_LABELS, signIn } from './helpers'
 /**
  * Per-role smoke: every seeded role can actually sign in and land on the workspace meant for it.
  * This is the check that the whole vertical — API, token, role routing, shell, i18n — holds
- * together in a real browser for each of the seven roles, not just the one we happen to develop in.
+ * together in a real browser for each of the eight roles, not just the one we happen to develop in.
  */
 test.describe('every role reaches its own workspace', () => {
   for (const [username, { label, shell, path }] of Object.entries(ROLE_LABELS)) {
@@ -19,8 +19,13 @@ test.describe('every role reaches its own workspace', () => {
         await expect(page.getByText('DEMO').first()).toBeVisible()
         // The world map — only the operator shell renders one.
         await expect(page.locator('.leaflet-container').first()).toBeVisible()
-      } else {
+      } else if (shell === 'field') {
         await expect(page.getByRole('heading', { name: /Welcome,/ })).toBeVisible()
+      } else {
+        // Central Authority's bare approval inbox: no shell chrome at all, so the negative space
+        // is the assertion — no DEMO badge, no map, just the queue.
+        await expect(page.getByText('DEMO')).toHaveCount(0)
+        await expect(page.locator('.leaflet-container')).toHaveCount(0)
       }
 
       // EN<->বাংলা toggle: its own label names the language it would switch TO, so clicking it

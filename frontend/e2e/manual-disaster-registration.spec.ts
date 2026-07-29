@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { DEMO_PASSWORD, signIn } from './helpers'
+import { signIn } from './helpers'
 
 /**
  * Ticket 13's two flows, end to end in a real browser: an Admin can declare a disaster by
@@ -57,19 +57,6 @@ async function signOut(page: Page) {
   await expect(page.getByRole('heading', { name: 'Sign in to the operation' })).toBeVisible()
 }
 
-/**
- * `central_authority` renders a bare inbox with no shell at all (see `roles.ts`), so it does not
- * fit `ROLE_LABELS`'s `operator`/`field` shell union that `helpers.signIn` and `roles.spec.ts`'s
- * per-role loop assume. Rather than force that fit, this role's sign-in is driven directly here.
- */
-async function signInAsCentralAuthority(page: Page) {
-  await page.goto('/login')
-  await page.getByLabel('Username').fill('central_authority')
-  await page.getByLabel('Password').fill(DEMO_PASSWORD)
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/central-authority$/)
-}
-
 test('an admin can declare a disaster by drawing its boundary, and see it on the roster', async ({ page }) => {
   const code = `E2E-${RUN_ID}`
   const nameEn = `E2E Test Disaster ${RUN_ID}`
@@ -121,7 +108,7 @@ test('a coordinator proposal reaches the central authority inbox and clears once
   await expect(page.getByText('Proposal submitted — waiting on the central authority.')).toBeVisible()
 
   await signOut(page)
-  await signInAsCentralAuthority(page)
+  await signIn(page, 'central_authority')
 
   // The bare inbox: no shell, no DEMO badge, no map, no "Welcome," heading — just the queue.
   await expect(page.getByRole('heading', { name: 'Pending proposals' })).toBeVisible()
@@ -141,9 +128,4 @@ test('a coordinator proposal reaches the central authority inbox and clears once
 test('a signed-out visitor at the central authority path is sent to sign in', async ({ page }) => {
   await page.goto('/central-authority')
   await expect(page.getByRole('heading', { name: 'Sign in to the operation' })).toBeVisible()
-})
-
-test('central authority signs in with the shared demo password like every other role', async ({ page }) => {
-  await signInAsCentralAuthority(page)
-  await expect(page.getByText('Central Authority').first()).toBeVisible()
 })

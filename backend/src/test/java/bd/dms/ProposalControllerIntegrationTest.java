@@ -345,6 +345,62 @@ class ProposalControllerIntegrationTest {
     }
 
     @Test
+    void approvingAProposalAgainstAClosedDisasterIsRejectedNotSilentlyApplied() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders admin = authHeaders("admin");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+
+        // Create and close a disaster directly via the admin path.
+        Map<String, String> createBody = Map.of(
+                "code", "prop-flood-closed-target", "type", "FLOOD", "nameEn", "Closed Target",
+                "nameBn", "বন্ধ লক্ষ্য", "geometry", POLYGON);
+        Long disasterId = rest.exchange("/admin/disasters", POST, new HttpEntity<>(createBody, admin), bd.dms.world.dto.DisasterAdminView.class)
+                .getBody().id();
+        rest.exchange("/admin/disasters/" + disasterId + "/close", POST, new HttpEntity<>(null, admin), String.class);
+
+        // A coordinator proposes a camp against the now-closed disaster.
+        Map<String, Object> campBody = Map.of(
+                "proposalType", "CAMP_CREATE",
+                "targetDisasterId", disasterId,
+                "payload", Map.of(
+                        "code", "prop-camp-closed-target", "nameEn", "Closed Camp", "nameBn", "বন্ধ ক্যাম্প",
+                        "lat", 24.1, "lng", 90.1, "capacity", 300, "initialPopulation", 50));
+        Long proposalId = propose(campBody, coordinator).getBody().id();
+
+        ResponseEntity<String> approved = approveRaw(proposalId, centralAuthority);
+        assertThat(approved.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        assertThat(camps.findByCode("prop-camp-closed-target")).isEmpty();
+    }
+
+    @Test
+    void approvingADuplicateCodeProposalFailsCleanlyWithBadRequestNotServerError() {
+        HttpHeaders coordinator = authHeaders("coordinator");
+        HttpHeaders centralAuthority = authHeaders("central_authority");
+
+        // Establish a disaster with a known code directly via the admin path is unnecessary here —
+        // proposing and approving the same code twice is enough to trigger the unique violation.
+        Long firstProposalId = proposeDisasterCreate("prop-flood-dup", coordinator).getBody().id();
+        ResponseEntity<ProposalView> firstApproval = approve(firstProposalId, centralAuthority);
+        assertThat(firstApproval.getStatusCode().is2xxSuccessful()).isTrue();
+
+        Long secondProposalId = proposeDisasterCreate("prop-flood-dup", coordinator).getBody().id();
+        ResponseEntity<String> secondApproval = approveRaw(secondProposalId, centralAuthority);
+        assertThat(secondApproval.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // The proposal is still PENDING (approval failed before it could be marked resolved), so
+        // the central authority can now reject it cleanly instead of being permanently stuck.
+        ResponseEntity<ProposalView> rejected = rest.exchange(
+                "/proposals/" + secondProposalId + "/reject", POST,
+                new HttpEntity<>(Map.of("reviewNote", "duplicate code"), centralAuthority), ProposalView.class);
+        assertThat(rejected.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(rejected.getBody().status()).isEqualTo(ProposalStatus.REJECTED);
+
+        assertThat(disasters.findAll().stream().filter(d -> "prop-flood-dup".equals(d.getCode())).count())
+                .isEqualTo(1);
+    }
+
+    @Test
     void targetDisasterIdValidationIsEnforcedAtProposeTime() {
         HttpHeaders coordinator = authHeaders("coordinator");
         Long disasterId = disasters.findAll().get(0).getId();

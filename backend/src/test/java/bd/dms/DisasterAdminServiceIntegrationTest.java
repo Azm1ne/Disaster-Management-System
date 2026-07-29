@@ -200,4 +200,27 @@ class DisasterAdminServiceIntegrationTest {
                         999_999L, "x", "y", "z", 0, 0, 10, 5, actorId()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void updateCreateAffectedAreaAndCreateCampAllRejectAClosedDisaster() {
+        Long actor = actorId();
+        Disaster disaster = adminService.createDisaster(
+                "test-flood-7", "FLOOD", "Test Flood 7", "টেস্ট বন্যা ৭", POLYGON_A, actor);
+        adminService.closeDisaster(disaster.getId(), actor);
+
+        assertThatThrownBy(() -> adminService.updateDisaster(disaster.getId(), "New Name", null, null, actor))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("closed");
+
+        assertThatThrownBy(() -> adminService.createAffectedArea(
+                        disaster.getId(), "Char Belt", "চর বেল্ট", POLYGON_B, actor))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("closed");
+
+        assertThatThrownBy(() -> adminService.createCamp(
+                        disaster.getId(), "test-flood-7-camp-1", "New Camp", "নতুন ক্যাম্প",
+                        24.9, 89.3, 500, 200, actor))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("closed");
+    }
 }

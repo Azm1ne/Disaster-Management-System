@@ -62,6 +62,7 @@ public class DisasterAdminService {
     public Disaster updateDisaster(Long disasterId, String nameEn, String nameBn, String geometry, Long actorUserId) {
         Disaster disaster = disasters.findById(disasterId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown disaster: " + disasterId));
+        requireOpen(disaster);
 
         if (nameEn != null) {
             disaster.setNameEn(nameEn);
@@ -93,8 +94,9 @@ public class DisasterAdminService {
     /** Registers a new affected area (polygon) under an existing disaster. */
     public AffectedArea createAffectedArea(
             Long disasterId, String nameEn, String nameBn, String geometry, Long actorUserId) {
-        disasters.findById(disasterId)
+        Disaster disaster = disasters.findById(disasterId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown disaster: " + disasterId));
+        requireOpen(disaster);
 
         AffectedArea area = areas.save(new AffectedArea(disasterId, nameEn, nameBn, geometry));
         geometryHistory.save(new GeometryHistory(
@@ -117,8 +119,9 @@ public class DisasterAdminService {
             int capacity,
             int initialPopulation,
             Long actorUserId) {
-        disasters.findById(disasterId)
+        Disaster disaster = disasters.findById(disasterId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown disaster: " + disasterId));
+        requireOpen(disaster);
 
         Camp camp = camps.save(new Camp(
                 disasterId, code, nameEn, nameBn, lat, lng, capacity, initialPopulation, "OPEN"));
@@ -132,6 +135,15 @@ public class DisasterAdminService {
                 camp.getId(), "MEDICAL", MEDICAL_PER_PERSON.multiply(population), "aid kits"));
 
         return camp;
+    }
+
+    /** Rejects any structural change against a disaster that has already been closed — the
+     * backend-side enforcement of the same rule the admin UI already hides behind (see
+     * {@code DisasterDetailPanel}), so a coordinator can't route around it via a proposal. */
+    private void requireOpen(Disaster disaster) {
+        if ("CLOSED".equals(disaster.getStatus())) {
+            throw new IllegalArgumentException("Disaster " + disaster.getId() + " is closed");
+        }
     }
 
     /** A subject's geometry history, oldest first — the audit trail Task 3's controller exposes. */

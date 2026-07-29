@@ -1,5 +1,6 @@
 package bd.dms.api;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -30,5 +31,13 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> onIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse("invalid_request"));
+    }
+
+    /** A duplicate unique key (e.g. an already-used disaster/camp code) is a bad request, not a
+     * 500 — matters most on the proposal path, where without this a duplicate-code proposal
+     * would 500 on every approval attempt and could never be cleanly resolved. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> onDataIntegrityViolation(DataIntegrityViolationException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse("duplicate_or_invalid_data"));
     }
 }
